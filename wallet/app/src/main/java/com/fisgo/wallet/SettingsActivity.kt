@@ -300,8 +300,16 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun performLogout() {
         try {
+            // Cerrar sesión en Firebase
             auth.signOut()
+            
+            // Limpiar datos sensibles locales si es necesario
+            val sharedPrefs = getSharedPreferences("wallet_settings", MODE_PRIVATE)
+            sharedPrefs.edit().remove("user_session_data").apply()
+            
             showMessage("Sesión cerrada exitosamente")
+            
+            // Redirigir inmediatamente al login
             redirectToLogin()
         } catch (e: Exception) {
             showMessage("Error al cerrar sesión: ${e.message}")
@@ -319,6 +327,10 @@ class SettingsActivity : AppCompatActivity() {
                         WalletManager.clearAllData(this)
                         PaymentMethodManager.clearAllData(this)
                         
+                        // Limpiar configuraciones
+                        val sharedPrefs = getSharedPreferences("wallet_settings", MODE_PRIVATE)
+                        sharedPrefs.edit().clear().apply()
+                        
                         showMessage("Cuenta eliminada exitosamente")
                         redirectToLogin()
                     } else {
@@ -329,8 +341,10 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun redirectToLogin() {
-        // Aquí puedes redirigir a tu actividad de login
-        // Por ahora solo cerraremos la actividad
+        // Limpiar el stack de actividades y redirigir al login
+        val intent = Intent(this, LoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
         finish()
     }
 

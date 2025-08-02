@@ -446,16 +446,6 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="24dp">
 
-        <!-- Overlay transparente para cerrar el menu -->
-        <View
-            android:id="@+id/fabOverlay"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#80000000"
-            android:visibility="gone"
-            android:clickable="true"
-            android:focusable="true" />
-
         <!-- Opciones del Speed Dial -->
         <LinearLayout
             android:id="@+id/fabMenuContainer"

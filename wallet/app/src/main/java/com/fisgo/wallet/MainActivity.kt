@@ -25,7 +25,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var paymentMethodsCard: LinearLayout
     private lateinit var settingsCard: LinearLayout
     private lateinit var mainFab: FloatingActionButton
-    private lateinit var fabOverlay: View
     private lateinit var fabMenuContainer: LinearLayout
     private lateinit var fabInventoryOption: LinearLayout
     private lateinit var fabAddFundsOption: LinearLayout
@@ -49,7 +48,6 @@ class MainActivity : AppCompatActivity() {
         paymentMethodsCard = findViewById(R.id.paymentMethodsCard)
         settingsCard = findViewById(R.id.settingsCard)
         mainFab = findViewById(R.id.mainFab)
-        fabOverlay = findViewById(R.id.fabOverlay)
         fabMenuContainer = findViewById(R.id.fabMenuContainer)
         fabInventoryOption = findViewById(R.id.fabInventoryOption)
         fabAddFundsOption = findViewById(R.id.fabAddFundsOption)
@@ -90,18 +88,12 @@ class MainActivity : AppCompatActivity() {
             toggleFabMenu()
         }
         
-        fabOverlay.setOnClickListener {
-            closeFabMenu()
-        }
-        
         fabInventoryOption.setOnClickListener {
-            closeFabMenu()
             val intent = Intent(this, ProductInventoryActivity::class.java)
             startActivity(intent)
         }
         
         fabAddFundsOption.setOnClickListener {
-            closeFabMenu()
             val intent = Intent(this, AddFundsActivity::class.java)
             startActivity(intent)
         }
@@ -148,8 +140,7 @@ class MainActivity : AppCompatActivity() {
     private fun openFabMenu() {
         isFabMenuOpen = true
         
-        // Mostrar overlay y menu
-        fabOverlay.visibility = View.VISIBLE
+        // Mostrar menu
         fabMenuContainer.visibility = View.VISIBLE
         
         // Animar rotación del FAB principal
@@ -158,29 +149,22 @@ class MainActivity : AppCompatActivity() {
             .setDuration(200)
             .start()
         
-        // Animar entrada del overlay
-        fabOverlay.alpha = 0f
-        fabOverlay.animate()
-            .alpha(1f)
-            .setDuration(200)
-            .start()
-        
-        // Animar entrada de las opciones
-        fabInventoryOption.alpha = 0f
-        fabInventoryOption.translationY = 100f
+        // Animar entrada de las opciones con escalado
+        fabInventoryOption.scaleX = 0f
+        fabInventoryOption.scaleY = 0f
         fabInventoryOption.animate()
-            .alpha(1f)
-            .translationY(0f)
-            .setDuration(300)
+            .scaleX(1f)
+            .scaleY(1f)
+            .setDuration(200)
             .setStartDelay(50)
             .start()
         
-        fabAddFundsOption.alpha = 0f
-        fabAddFundsOption.translationY = 100f
+        fabAddFundsOption.scaleX = 0f
+        fabAddFundsOption.scaleY = 0f
         fabAddFundsOption.animate()
-            .alpha(1f)
-            .translationY(0f)
-            .setDuration(300)
+            .scaleX(1f)
+            .scaleY(1f)
+            .setDuration(200)
             .setStartDelay(100)
             .start()
     }
@@ -194,26 +178,17 @@ class MainActivity : AppCompatActivity() {
             .setDuration(200)
             .start()
         
-        // Animar salida del overlay
-        fabOverlay.animate()
-            .alpha(0f)
-            .setDuration(200)
-            .withEndAction {
-                fabOverlay.visibility = View.GONE
-            }
-            .start()
-        
         // Animar salida de las opciones
         fabInventoryOption.animate()
-            .alpha(0f)
-            .translationY(100f)
-            .setDuration(200)
+            .scaleX(0f)
+            .scaleY(0f)
+            .setDuration(150)
             .start()
         
         fabAddFundsOption.animate()
-            .alpha(0f)
-            .translationY(100f)
-            .setDuration(200)
+            .scaleX(0f)
+            .scaleY(0f)
+            .setDuration(150)
             .withEndAction {
                 fabMenuContainer.visibility = View.GONE
             }

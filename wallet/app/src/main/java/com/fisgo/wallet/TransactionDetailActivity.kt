@@ -92,7 +92,7 @@ class TransactionDetailActivity : AppCompatActivity() {
                 result.onSuccess { transaction ->
                     Log.d("TransactionDetail", "Transaction detail loaded: ${transaction.id}")
                     runOnUiThread {
-                        displayTransactionDetail(transaction)
+                        updateUI(transaction)
                     }
                 }.onFailure { error ->
                     Log.e("TransactionDetail", "Error loading transaction detail", error)

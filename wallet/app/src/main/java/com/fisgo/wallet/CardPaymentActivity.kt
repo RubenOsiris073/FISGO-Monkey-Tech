@@ -327,11 +327,15 @@ class CardPaymentActivity : AppCompatActivity() {
                     }
                     
                     // Habilitar botón si la tarjeta es válida O hay tarjeta guardada
-                    val hasValidCard = cardInputWidget.cardParams != null || PaymentMethodManager.hasSavedCard(this@CardPaymentActivity)
+                    val hasValidCard = if (this::cardInputWidget.isInitialized) {
+                        cardInputWidget.cardParams != null || PaymentMethodManager.hasSavedCard(this@CardPaymentActivity)
+                    } else {
+                        PaymentMethodManager.hasSavedCard(this@CardPaymentActivity)
+                    }
                     binding.payButton.isEnabled = hasValidCard
                     
                     Log.d(TAG, "Payment Intent creado: $paymentIntentId")
-                    Log.d(TAG, "Botón habilitado: $hasValidCard (CardParams: ${cardInputWidget.cardParams != null}, SavedCard: ${PaymentMethodManager.hasSavedCard(this@CardPaymentActivity)})")
+                    Log.d(TAG, "Botón habilitado: $hasValidCard (CardWidget: ${this::cardInputWidget.isInitialized}, SavedCard: ${PaymentMethodManager.hasSavedCard(this@CardPaymentActivity)})")
                 } else {
                     showError("Error preparando el pago: ${response.error}")
                 }
@@ -400,7 +404,7 @@ class CardPaymentActivity : AppCompatActivity() {
                     kotlinx.coroutines.delay(1000)
                     
                     // Guardar información de la tarjeta
-                    val cardBrand = cardInputWidget.brand.displayName
+                    val cardBrand = if (this::cardInputWidget.isInitialized) cardInputWidget.brand.displayName else "Unknown"
                     // En modo configuración, generamos un lastFour simulado para demo
                     val lastFour = generateMockLastFour()
                     

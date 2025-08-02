@@ -93,6 +93,13 @@
             android:exported="false"
             android:theme="@style/Theme.App.NoActionBar"
             android:parentActivityName=".ProductInventoryActivity" />
+
+        <!-- Actividad para agregar fondos -->
+        <activity
+            android:name=".AddFundsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.App.NoActionBar"
+            android:parentActivityName=".MainActivity" />
             
     </application>
 

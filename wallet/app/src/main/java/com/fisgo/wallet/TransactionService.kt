@@ -178,6 +178,19 @@ class TransactionService {
             paymentMethod = "Tarjeta •••• 4242"
         ))
         
+        // Recarga de fondos hace 10 días
+        calendar.add(Calendar.DAY_OF_MONTH, -3)
+        transactions.add(Transaction(
+            id = "tx_007",
+            amount = 300.00,
+            status = "completed",
+            type = "add_funds",
+            createdAt = calendar.time,
+            description = "Recarga de saldo",
+            merchantName = "FISGO Wallet",
+            paymentMethod = "Tarjeta •••• 4242"
+        ))
+        
         Log.d("TransactionService", "Created ${transactions.size} mock transactions")
         return transactions
     }

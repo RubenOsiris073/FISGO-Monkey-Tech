@@ -22,6 +22,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var paymentMethodsCard: LinearLayout
     private lateinit var settingsCard: LinearLayout
     private lateinit var inventoryFab: FloatingActionButton
+    private lateinit var addFundsFab: FloatingActionButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,6 +41,7 @@ class MainActivity : AppCompatActivity() {
         paymentMethodsCard = findViewById(R.id.paymentMethodsCard)
         settingsCard = findViewById(R.id.settingsCard)
         inventoryFab = findViewById(R.id.inventoryFab)
+        addFundsFab = findViewById(R.id.addFundsFab)
     }
 
     private fun setupListeners() {
@@ -75,6 +77,12 @@ class MainActivity : AppCompatActivity() {
         // Botón flotante de inventario
         inventoryFab.setOnClickListener {
             val intent = Intent(this, ProductInventoryActivity::class.java)
+            startActivity(intent)
+        }
+
+        // Botón flotante para agregar fondos
+        addFundsFab.setOnClickListener {
+            val intent = Intent(this, AddFundsActivity::class.java)
             startActivity(intent)
         }
     }

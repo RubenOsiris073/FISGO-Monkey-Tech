@@ -39,37 +39,16 @@ class PaymentSuccessActivity : AppCompatActivity() {
         val remainingBalance = WalletManager.getBalance(this)
         
         amountText.text = "$${String.format("%.2f", amount)}"
-        transactionIdText.text = "ID de Transacción: $transactionId"
-        remainingBalanceText.text = "Saldo disponible: $${String.format("%.2f", remainingBalance)}"
         
-        // Mostrar el método de pago usado (nuevo)
-        if (paymentMethod != "Desconocido") {
-            // Agregar información del método de pago si no existe en el layout
-            val methodText = TextView(this)
-            methodText.text = "Método de pago: $paymentMethod"
-            methodText.textSize = 14f
-            methodText.setTextColor(resources.getColor(android.R.color.darker_gray, null))
-            methodText.gravity = android.view.Gravity.CENTER
-            
-            // Encontrar el contenedor principal y agregar el TextView
-            val mainContainer = findViewById<LinearLayout>(R.id.mainContainer) 
-            if (mainContainer != null) {
-                val layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-                layoutParams.setMargins(0, 0, 0, 16)
-                methodText.layoutParams = layoutParams
-                
-                // Insertarlo antes del saldo restante
-                val remainingBalanceIndex = mainContainer.indexOfChild(remainingBalanceText)
-                mainContainer.addView(methodText, remainingBalanceIndex)
-            }
-        }
+        // Formatear el ID de transacción más limpio (solo el ID sin texto adicional)
+        transactionIdText.text = if (transactionId.isNotEmpty()) transactionId else "N/A"
+        
+        remainingBalanceText.text = "$${String.format("%.2f", remainingBalance)}"
     }
     
     private fun setupListeners() {
         closeButton.setOnClickListener {
+            // Regresar a la pantalla principal
             val intent = Intent(this, MainActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
             startActivity(intent)

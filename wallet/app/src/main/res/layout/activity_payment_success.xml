@@ -1,104 +1,238 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#F5F5F5"
-    android:gravity="center"
-    android:padding="16dp">
+    android:background="#F8F9FA"
+    android:fillViewport="true">
 
-    <com.google.android.material.card.MaterialCardView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="24dp"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="4dp"
-        xmlns:app="http://schemas.android.com/apk/res-auto">
+        android:orientation="vertical">
 
+        <!-- Header moderno con diseño similar al repo -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/success_header_bg"
+            android:orientation="vertical"
+            android:paddingStart="24dp"
+            android:paddingTop="50dp"
+            android:paddingEnd="24dp"
+            android:paddingBottom="40dp">
+
+            <!-- Header content -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="¡Pago Exitoso!"
+                        android:textColor="#FFFFFF"
+                        android:textSize="28sp"
+                        android:textStyle="bold"
+                        android:fontFamily="sans-serif-medium" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Transacción completada"
+                        android:textColor="#E8F5E8"
+                        android:textSize="16sp"
+                        android:alpha="0.9"
+                        android:layout_marginTop="4dp" />
+
+                </LinearLayout>
+
+                <ImageView
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:background="@drawable/success_icon_bg"
+                    android:src="@drawable/ic_check_circle"
+                    android:padding="14dp"
+                    android:tint="#FFFFFF" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Payment Details Card -->
         <LinearLayout
             android:id="@+id/mainContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="24dp"
-            android:gravity="center">
+            android:layout_marginTop="-24dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:background="@drawable/payment_details_card_bg"
+            android:padding="28dp"
+            android:elevation="12dp"
+            android:layout_marginBottom="24dp">
 
-            <!-- Icono de éxito -->
-            <ImageView
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:src="@drawable/ic_check_circle"
-                android:layout_marginBottom="24dp"
-                android:tint="#4CAF50" />
-
-            <!-- Título -->
-            <TextView
+            <!-- Monto pagado -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="¡Pago Exitoso!"
-                android:textSize="24sp"
-                android:textStyle="bold"
+                android:orientation="vertical"
                 android:gravity="center"
-                android:layout_marginBottom="16dp"
-                android:textColor="@android:color/black" />
+                android:layout_marginBottom="32dp">
 
-            <!-- Monto -->
-            <TextView
-                android:id="@+id/amountText"
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Monto Pagado"
+                    android:textColor="#8E8E93"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/amountText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="$0.00"
+                    android:textSize="42sp"
+                    android:textStyle="bold"
+                    android:textColor="#4CAF50"
+                    android:fontFamily="sans-serif-medium" />
+
+            </LinearLayout>
+
+            <!-- Detalles de la transacción -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="$0.00"
-                android:textSize="36sp"
-                android:textStyle="bold"
-                android:gravity="center"
-                android:layout_marginBottom="16dp"
-                android:textColor="#4CAF50" />
+                android:orientation="vertical"
+                android:background="@drawable/transaction_details_bg"
+                android:padding="20dp"
+                android:layout_marginBottom="24dp">
 
-            <!-- ID de transacción -->
-            <TextView
-                android:id="@+id/transactionIdText"
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Detalles de la Transacción"
+                    android:textColor="#1D1D1F"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- Transaction ID -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="12dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="ID de Transacción"
+                        android:textColor="#8E8E93"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/transactionIdText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="TXN123456"
+                        android:textColor="#1D1D1F"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace" />
+
+                </LinearLayout>
+
+                <!-- Remaining Balance -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Saldo Restante"
+                        android:textColor="#8E8E93"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/remainingBalanceText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="$0.00"
+                        android:textColor="#007AFF"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Mensaje de confirmación -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="ID de Transacción: "
-                android:textSize="14sp"
-                android:gravity="center"
-                android:layout_marginBottom="16dp"
-                android:textColor="#666666" />
+                android:orientation="horizontal"
+                android:background="@drawable/success_message_bg"
+                android:padding="16dp"
+                android:layout_marginBottom="32dp">
 
-            <!-- Saldo restante -->
-            <TextView
-                android:id="@+id/remainingBalanceText"
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_info"
+                    android:tint="#4CAF50"
+                    android:layout_marginEnd="12dp"
+                    android:layout_marginTop="2dp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Tu pago ha sido procesado correctamente. Guarda el ID de transacción como referencia."
+                    android:textSize="14sp"
+                    android:textColor="#2D2D2D"
+                    android:lineSpacingExtra="2dp" />
+
+            </LinearLayout>
+
+            <!-- Botón cerrar moderno -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Saldo disponible: $0.00"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:gravity="center"
-                android:layout_marginBottom="16dp"
-                android:textColor="#2196F3" />
+                android:orientation="vertical">
 
-            <!-- Mensaje -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Tu pago ha sido procesado correctamente. Guarda el ID de transacción como referencia."
-                android:textSize="16sp"
-                android:gravity="center"
-                android:layout_marginBottom="24dp"
-                android:lineSpacingExtra="4dp"
-                android:textColor="@android:color/black" />
+                <Button
+                    android:id="@+id/closeButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:text="Continuar"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF"
+                    android:background="@drawable/primary_button_bg"
+                    android:elevation="0dp"
+                    android:stateListAnimator="@null"
+                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton" />
 
-            <!-- Botón cerrar -->
-            <Button
-                android:id="@+id/closeButton"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:text="Cerrar"
-                android:textSize="16sp"
-                style="@style/Widget.MaterialComponents.Button" />
+            </LinearLayout>
 
         </LinearLayout>
 
-    </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
 
-</LinearLayout>
+</ScrollView>

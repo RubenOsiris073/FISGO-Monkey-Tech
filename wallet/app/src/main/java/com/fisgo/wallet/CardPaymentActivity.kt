@@ -152,24 +152,23 @@ class CardPaymentActivity : AppCompatActivity() {
         
         // Listener para validar la tarjeta - solo si se creó CardInputWidget
         cardInputWidget?.setCardValidCallback { isValid, _ ->
-                // En modo setup, solo requerimos que la tarjeta sea válida
-                // En modo pago, requerimos tarjeta válida Y clientSecret (O que haya tarjeta guardada)
-                val hasValidPayment = if (isSetupMode) {
-                    isValid
-                } else {
-                    // Para pagos: tarjeta válida O usar tarjeta guardada + clientSecret listo
-                    (isValid && clientSecret != null) || (PaymentMethodManager.hasSavedCard(this) && clientSecret != null)
-                }
-                
-                binding.payButton.isEnabled = hasValidPayment
-                
-                // Actualizar logos de tarjetas basado en el tipo detectado
-                val cardBrand = cardInputWidget?.brand
-                cardBrand?.let { updateCardLogos(it.code) }
-                
-                // Log para debugging
-                Log.d(TAG, "Card validation - Valid: $isValid, ClientSecret: ${clientSecret != null}, HasSavedCard: ${PaymentMethodManager.hasSavedCard(this)}, Button enabled: ${binding.payButton.isEnabled}")
+            // En modo setup, solo requerimos que la tarjeta sea válida
+            // En modo pago, requerimos tarjeta válida Y clientSecret (O que haya tarjeta guardada)
+            val hasValidPayment = if (isSetupMode) {
+                isValid
+            } else {
+                // Para pagos: tarjeta válida O usar tarjeta guardada + clientSecret listo
+                (isValid && clientSecret != null) || (PaymentMethodManager.hasSavedCard(this) && clientSecret != null)
             }
+            
+            binding.payButton.isEnabled = hasValidPayment
+            
+            // Actualizar logos de tarjetas basado en el tipo detectado
+            val cardBrand = cardInputWidget?.brand
+            cardBrand?.let { updateCardLogos(it.code) }
+            
+            // Log para debugging
+            Log.d(TAG, "Card validation - Valid: $isValid, ClientSecret: ${clientSecret != null}, HasSavedCard: ${PaymentMethodManager.hasSavedCard(this)}, Button enabled: ${binding.payButton.isEnabled}")
         }
     }
     

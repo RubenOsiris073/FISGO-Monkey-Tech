@@ -149,19 +149,22 @@ class CardPaymentActivity : AppCompatActivity() {
         // Listener para validar la tarjeta
         cardInputWidget.setCardValidCallback { isValid, _ ->
             // En modo setup, solo requerimos que la tarjeta sea válida
-            // En modo pago, requerimos tarjeta válida Y clientSecret
-            binding.payButton.isEnabled = if (isSetupMode) {
+            // En modo pago, requerimos tarjeta válida Y clientSecret (O que haya tarjeta guardada)
+            val hasValidPayment = if (isSetupMode) {
                 isValid
             } else {
-                isValid && clientSecret != null
+                // Para pagos: tarjeta válida O usar tarjeta guardada + clientSecret listo
+                (isValid && clientSecret != null) || (PaymentMethodManager.hasSavedCard(this) && clientSecret != null)
             }
+            
+            binding.payButton.isEnabled = hasValidPayment
             
             // Actualizar logos de tarjetas basado en el tipo detectado
             val cardBrand = cardInputWidget.brand
             updateCardLogos(cardBrand.code)
             
             // Log para debugging
-            Log.d(TAG, "Card validation - Valid: $isValid, ClientSecret: ${clientSecret != null}, SetupMode: $isSetupMode, Button enabled: ${binding.payButton.isEnabled}")
+            Log.d(TAG, "Card validation - Valid: $isValid, ClientSecret: ${clientSecret != null}, HasSavedCard: ${PaymentMethodManager.hasSavedCard(this)}, Button enabled: ${binding.payButton.isEnabled}")
         }
     }
     
@@ -209,8 +212,15 @@ class CardPaymentActivity : AppCompatActivity() {
     }
     
     private fun showSavedCardMessage(cardType: String, lastFour: String) {
-        // Crear un TextView temporal para mostrar información de la tarjeta guardada
+        // Verificar si ya existe el mensaje para evitar duplicados
+        val existingMessage = binding.cardInputContainer.findViewWithTag<android.widget.TextView>("saved_card_message")
+        if (existingMessage != null) {
+            return // Ya existe el mensaje, no agregar otro
+        }
+        
+        // Crear un TextView para mostrar información de la tarjeta guardada
         val savedCardText = android.widget.TextView(this)
+        savedCardText.tag = "saved_card_message" // Tag para identificarlo
         savedCardText.text = "💳 Tarjeta guardada: $cardType •••• $lastFour"
         savedCardText.textSize = 14f
         savedCardText.setTextColor(android.graphics.Color.parseColor("#007AFF"))
@@ -220,15 +230,31 @@ class CardPaymentActivity : AppCompatActivity() {
             cornerRadius = 8f
         }
         
+        // Crear layoutParams con márgenes
+        val layoutParams = android.widget.LinearLayout.LayoutParams(
+            android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+            android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        layoutParams.setMargins(0, 0, 0, 16) // Margen inferior
+        savedCardText.layoutParams = layoutParams
+        
         // Agregar el mensaje arriba del CardInputWidget
         binding.cardInputContainer.addView(savedCardText, 0)
         
         // También mostrar un mensaje explicativo
         val instructionText = android.widget.TextView(this)
+        instructionText.tag = "instruction_message" // Tag para identificarlo
         instructionText.text = "Puedes usar tu tarjeta guardada o ingresar una nueva"
         instructionText.textSize = 12f
         instructionText.setTextColor(android.graphics.Color.parseColor("#8E8E93"))
         instructionText.setPadding(16, 4, 16, 12)
+        
+        val instructionLayoutParams = android.widget.LinearLayout.LayoutParams(
+            android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+            android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        instructionLayoutParams.setMargins(0, 0, 0, 16) // Margen inferior
+        instructionText.layoutParams = instructionLayoutParams
         
         binding.cardInputContainer.addView(instructionText, 1)
     }
@@ -247,10 +273,12 @@ class CardPaymentActivity : AppCompatActivity() {
                         binding.paymentIdTextView.visibility = android.view.View.VISIBLE
                     }
                     
-                    // Habilitar botón si la tarjeta es válida
-                    binding.payButton.isEnabled = cardInputWidget.cardParams != null
+                    // Habilitar botón si la tarjeta es válida O hay tarjeta guardada
+                    val hasValidCard = cardInputWidget.cardParams != null || PaymentMethodManager.hasSavedCard(this@CardPaymentActivity)
+                    binding.payButton.isEnabled = hasValidCard
                     
                     Log.d(TAG, "Payment Intent creado: $paymentIntentId")
+                    Log.d(TAG, "Botón habilitado: $hasValidCard (CardParams: ${cardInputWidget.cardParams != null}, SavedCard: ${PaymentMethodManager.hasSavedCard(this@CardPaymentActivity)})")
                 } else {
                     showError("Error preparando el pago: ${response.error}")
                 }
@@ -293,7 +321,10 @@ class CardPaymentActivity : AppCompatActivity() {
     
     private fun processPayment() {
         val cardParams = cardInputWidget.cardParams
-        if (cardParams == null) {
+        val hasSavedCard = PaymentMethodManager.hasSavedCard(this)
+        
+        // Permitir pago si hay nueva tarjeta válida O hay tarjeta guardada
+        if (cardParams == null && !hasSavedCard) {
             showError("Por favor, ingresa una tarjeta válida")
             return
         }
@@ -302,6 +333,12 @@ class CardPaymentActivity : AppCompatActivity() {
         
         if (isSetupMode) {
             // Modo configuración: solo guardar información de la tarjeta
+            if (cardParams == null) {
+                showError("Por favor, ingresa una tarjeta para guardar")
+                binding.payButton.isEnabled = true
+                return
+            }
+            
             binding.payButton.text = "Guardando tarjeta..."
             
             lifecycleScope.launch {
@@ -349,28 +386,37 @@ class CardPaymentActivity : AppCompatActivity() {
             
             lifecycleScope.launch {
                 try {
-                    // Crear PaymentMethodCreateParams correctamente para Stripe Android
-                    val paymentMethodParams = PaymentMethodCreateParams.createCard(cardParams)
-                    val confirmParams = ConfirmPaymentIntentParams.createWithPaymentMethodCreateParams(
-                        paymentMethodCreateParams = paymentMethodParams,
-                        clientSecret = clientSecret!!
-                    )
+                    Log.d(TAG, "Procesando pago - CardParams: ${cardParams != null}, SavedCard: $hasSavedCard")
                     
-                    Log.d(TAG, "Confirmando pago con Stripe...")
+                    // Determinar qué información de tarjeta usar
+                    val cardBrand: String
+                    val lastFour: String
                     
-                    // Para el SDK de Android, necesitamos usar un callback
-                    // Pero primero simulamos un pago exitoso para testing
-                    kotlinx.coroutines.delay(2000) // Simular proceso de pago
+                    if (cardParams != null) {
+                        // Usar nueva tarjeta ingresada
+                        cardBrand = cardInputWidget.brand.displayName
+                        lastFour = generateMockLastFour() // Simulado por seguridad
+                        
+                        Log.d(TAG, "Usando nueva tarjeta: $cardBrand")
+                    } else {
+                        // Usar tarjeta guardada
+                        cardBrand = PaymentMethodManager.getSavedCardType(this@CardPaymentActivity) ?: "Unknown"
+                        lastFour = PaymentMethodManager.getSavedCardLastFour(this@CardPaymentActivity) ?: "0000"
+                        
+                        Log.d(TAG, "Usando tarjeta guardada: $cardBrand **** $lastFour")
+                    }
                     
-                    // Guardar información de la tarjeta al completar exitosamente
-                    val cardBrand = cardInputWidget.brand.displayName
-                    val lastFour = generateMockLastFour() // Simulado por seguridad
+                    // Simular proceso de pago
+                    kotlinx.coroutines.delay(2000)
                     
-                    PaymentMethodManager.saveCardInfo(
-                        this@CardPaymentActivity,
-                        lastFour,
-                        cardBrand
-                    )
+                    // Guardar información de la tarjeta si es nueva
+                    if (cardParams != null) {
+                        PaymentMethodManager.saveCardInfo(
+                            this@CardPaymentActivity,
+                            lastFour,
+                            cardBrand
+                        )
+                    }
                     
                     Log.d(TAG, "Pago procesado exitosamente")
                     Toast.makeText(this@CardPaymentActivity, "¡Pago procesado exitosamente!", Toast.LENGTH_LONG).show()

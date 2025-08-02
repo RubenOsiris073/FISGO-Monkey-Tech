@@ -221,7 +221,7 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:textAllCaps="false"
-                app:backgroundTint="#34C759"
+                app:backgroundTint="#007AFF"
                 app:cornerRadius="16dp"
                 app:rippleColor="#FFFFFF"
                 android:layout_marginBottom="24dp" />

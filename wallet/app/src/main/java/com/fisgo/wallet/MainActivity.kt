@@ -3,6 +3,9 @@ package com.fisgo.wallet
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.View
+import android.view.animation.Animation
+import android.view.animation.AnimationUtils
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -21,8 +24,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var transactionHistoryCard: LinearLayout
     private lateinit var paymentMethodsCard: LinearLayout
     private lateinit var settingsCard: LinearLayout
-    private lateinit var inventoryFab: FloatingActionButton
-    private lateinit var addFundsFab: FloatingActionButton
+    private lateinit var mainFab: FloatingActionButton
+    private lateinit var fabOverlay: View
+    private lateinit var fabMenuContainer: LinearLayout
+    private lateinit var fabInventoryOption: LinearLayout
+    private lateinit var fabAddFundsOption: LinearLayout
+    
+    private var isFabMenuOpen = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,8 +48,11 @@ class MainActivity : AppCompatActivity() {
         transactionHistoryCard = findViewById(R.id.transactionHistoryCard)
         paymentMethodsCard = findViewById(R.id.paymentMethodsCard)
         settingsCard = findViewById(R.id.settingsCard)
-        inventoryFab = findViewById(R.id.inventoryFab)
-        addFundsFab = findViewById(R.id.addFundsFab)
+        mainFab = findViewById(R.id.mainFab)
+        fabOverlay = findViewById(R.id.fabOverlay)
+        fabMenuContainer = findViewById(R.id.fabMenuContainer)
+        fabInventoryOption = findViewById(R.id.fabInventoryOption)
+        fabAddFundsOption = findViewById(R.id.fabAddFundsOption)
     }
 
     private fun setupListeners() {
@@ -74,14 +85,23 @@ class MainActivity : AppCompatActivity() {
             showMessage("Funcionalidad de Agregar Fondos próximamente")
         }
 
-        // Botón flotante de inventario
-        inventoryFab.setOnClickListener {
+        // Speed Dial FAB
+        mainFab.setOnClickListener {
+            toggleFabMenu()
+        }
+        
+        fabOverlay.setOnClickListener {
+            closeFabMenu()
+        }
+        
+        fabInventoryOption.setOnClickListener {
+            closeFabMenu()
             val intent = Intent(this, ProductInventoryActivity::class.java)
             startActivity(intent)
         }
-
-        // Botón flotante para agregar fondos
-        addFundsFab.setOnClickListener {
+        
+        fabAddFundsOption.setOnClickListener {
+            closeFabMenu()
             val intent = Intent(this, AddFundsActivity::class.java)
             startActivity(intent)
         }
@@ -114,6 +134,97 @@ class MainActivity : AppCompatActivity() {
             println("=== TU ID DE USUARIO ES: ${currentUser.uid} ===")
         } else {
             Log.d("USER_ID", "No hay usuario autenticado")
+        }
+    }
+    
+    private fun toggleFabMenu() {
+        if (isFabMenuOpen) {
+            closeFabMenu()
+        } else {
+            openFabMenu()
+        }
+    }
+    
+    private fun openFabMenu() {
+        isFabMenuOpen = true
+        
+        // Mostrar overlay y menu
+        fabOverlay.visibility = View.VISIBLE
+        fabMenuContainer.visibility = View.VISIBLE
+        
+        // Animar rotación del FAB principal
+        mainFab.animate()
+            .rotation(45f)
+            .setDuration(200)
+            .start()
+        
+        // Animar entrada del overlay
+        fabOverlay.alpha = 0f
+        fabOverlay.animate()
+            .alpha(1f)
+            .setDuration(200)
+            .start()
+        
+        // Animar entrada de las opciones
+        fabInventoryOption.alpha = 0f
+        fabInventoryOption.translationY = 100f
+        fabInventoryOption.animate()
+            .alpha(1f)
+            .translationY(0f)
+            .setDuration(300)
+            .setStartDelay(50)
+            .start()
+        
+        fabAddFundsOption.alpha = 0f
+        fabAddFundsOption.translationY = 100f
+        fabAddFundsOption.animate()
+            .alpha(1f)
+            .translationY(0f)
+            .setDuration(300)
+            .setStartDelay(100)
+            .start()
+    }
+    
+    private fun closeFabMenu() {
+        isFabMenuOpen = false
+        
+        // Animar rotación del FAB principal
+        mainFab.animate()
+            .rotation(0f)
+            .setDuration(200)
+            .start()
+        
+        // Animar salida del overlay
+        fabOverlay.animate()
+            .alpha(0f)
+            .setDuration(200)
+            .withEndAction {
+                fabOverlay.visibility = View.GONE
+            }
+            .start()
+        
+        // Animar salida de las opciones
+        fabInventoryOption.animate()
+            .alpha(0f)
+            .translationY(100f)
+            .setDuration(200)
+            .start()
+        
+        fabAddFundsOption.animate()
+            .alpha(0f)
+            .translationY(100f)
+            .setDuration(200)
+            .withEndAction {
+                fabMenuContainer.visibility = View.GONE
+            }
+            .start()
+    }
+    
+    override fun onBackPressed() {
+        if (isFabMenuOpen) {
+            closeFabMenu()
+        } else {
+            super.onBackPressed()
         }
     }
 }

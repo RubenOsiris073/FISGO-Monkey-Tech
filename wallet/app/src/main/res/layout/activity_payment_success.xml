@@ -132,26 +132,28 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
+                    android:orientation="vertical"
                     android:layout_marginBottom="12dp">
 
                     <TextView
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:text="ID de Transacción"
                         android:textColor="#8E8E93"
-                        android:textSize="14sp" />
+                        android:textSize="14sp"
+                        android:layout_marginBottom="4dp" />
 
                     <TextView
                         android:id="@+id/transactionIdText"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="TXN123456"
                         android:textColor="#1D1D1F"
                         android:textSize="14sp"
                         android:textStyle="bold"
-                        android:fontFamily="monospace" />
+                        android:fontFamily="monospace"
+                        android:background="@drawable/info_value_bg"
+                        android:padding="8dp" />
 
                 </LinearLayout>
 

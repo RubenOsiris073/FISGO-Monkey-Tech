@@ -133,6 +133,9 @@ class CardPaymentActivity : AppCompatActivity() {
     }
     
     private fun setupCardInput() {
+        // Limpiar mensajes antiguos si existen
+        clearDuplicateMessages()
+        
         // Crear y configurar el CardInputWidget de Stripe
         cardInputWidget = CardInputWidget(this)
         binding.cardInputContainer.addView(cardInputWidget)
@@ -142,7 +145,7 @@ class CardPaymentActivity : AppCompatActivity() {
             val cardType = PaymentMethodManager.getSavedCardType(this)
             val lastFour = PaymentMethodManager.getSavedCardLastFour(this)
             
-            // Mostrar información de la tarjeta guardada
+            // Mostrar información de la tarjeta guardada SOLO UNA VEZ
             showSavedCardInfo(cardType, lastFour)
         }
         
@@ -168,6 +171,18 @@ class CardPaymentActivity : AppCompatActivity() {
         }
     }
     
+    private fun clearDuplicateMessages() {
+        val toRemove = mutableListOf<android.view.View>()
+        for (i in 0 until binding.cardInputContainer.childCount) {
+            val child = binding.cardInputContainer.getChildAt(i)
+            if (child.tag == "saved_card_message" || child.tag == "instruction_message") {
+                toRemove.add(child)
+            }
+        }
+        toRemove.forEach { binding.cardInputContainer.removeView(it) }
+        Log.d(TAG, "Removidos ${toRemove.size} mensajes duplicados")
+    }
+    
     private fun updateCardLogos(cardBrand: String) {
         // Resetear opacidad de todos los logos
         binding.visaLogoImageView.alpha = 0.4f
@@ -184,6 +199,11 @@ class CardPaymentActivity : AppCompatActivity() {
     
     private fun showSavedCardInfo(cardType: String?, lastFour: String?) {
         if (cardType != null && lastFour != null) {
+            // Verificar si ya se mostró la información para evitar duplicados
+            if (binding.cardInputContainer.childCount > 1) {
+                return // Ya se agregaron elementos adicionales, no duplicar
+            }
+            
             // Mostrar información de la tarjeta guardada en la UI
             Log.d(TAG, "Tarjeta guardada encontrada: $cardType **** $lastFour")
             
@@ -212,11 +232,16 @@ class CardPaymentActivity : AppCompatActivity() {
     }
     
     private fun showSavedCardMessage(cardType: String, lastFour: String) {
-        // Verificar si ya existe el mensaje para evitar duplicados
-        val existingMessage = binding.cardInputContainer.findViewWithTag<android.widget.TextView>("saved_card_message")
-        if (existingMessage != null) {
-            return // Ya existe el mensaje, no agregar otro
+        // Verificar si ya existe el mensaje para evitar duplicados - verificación más robusta
+        for (i in 0 until binding.cardInputContainer.childCount) {
+            val child = binding.cardInputContainer.getChildAt(i)
+            if (child.tag == "saved_card_message" || child.tag == "instruction_message") {
+                Log.d(TAG, "Mensaje de tarjeta guardada ya existe, no duplicar")
+                return // Ya existe el mensaje, no agregar otro
+            }
         }
+        
+        Log.d(TAG, "Agregando mensaje de tarjeta guardada por primera vez")
         
         // Crear un TextView para mostrar información de la tarjeta guardada
         val savedCardText = android.widget.TextView(this)

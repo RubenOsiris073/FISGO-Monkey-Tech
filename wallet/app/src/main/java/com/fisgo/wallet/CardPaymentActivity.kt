@@ -328,7 +328,7 @@ class CardPaymentActivity : AppCompatActivity() {
                     
                     // Habilitar botón si la tarjeta es válida O hay tarjeta guardada
                     val hasValidCard = if (this::cardInputWidget.isInitialized) {
-                        cardInputWidget.cardParams != null || PaymentMethodManager.hasSavedCard(this@CardPaymentActivity)
+                        (cardInputWidget.cardParams != null) || PaymentMethodManager.hasSavedCard(this@CardPaymentActivity)
                     } else {
                         PaymentMethodManager.hasSavedCard(this@CardPaymentActivity)
                     }
@@ -404,7 +404,11 @@ class CardPaymentActivity : AppCompatActivity() {
                     kotlinx.coroutines.delay(1000)
                     
                     // Guardar información de la tarjeta
-                    val cardBrand = if (this::cardInputWidget.isInitialized) cardInputWidget.brand.displayName else "Unknown"
+                    val cardBrand = if (this::cardInputWidget.isInitialized) {
+                        cardInputWidget.brand.displayName
+                    } else {
+                        "Unknown"
+                    }
                     // En modo configuración, generamos un lastFour simulado para demo
                     val lastFour = generateMockLastFour()
                     
@@ -451,7 +455,11 @@ class CardPaymentActivity : AppCompatActivity() {
                     
                     if (cardParams != null) {
                         // Usar nueva tarjeta ingresada
-                        cardBrand = if (this::cardInputWidget.isInitialized) cardInputWidget.brand.displayName else "Unknown"
+                        cardBrand = if (this::cardInputWidget.isInitialized) {
+                            cardInputWidget.brand.displayName
+                        } else {
+                            "Unknown"
+                        }
                         lastFour = generateMockLastFour() // Simulado por seguridad
                         
                         Log.d(TAG, "Usando nueva tarjeta: $cardBrand")

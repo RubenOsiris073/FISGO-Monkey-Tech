@@ -26,7 +26,7 @@ class CardPaymentActivity : AppCompatActivity() {
     
     private lateinit var binding: ActivityCardPaymentBinding
     private lateinit var stripe: Stripe
-    private lateinit var cardInputWidget: CardInputWidget
+    private var cardInputWidget: CardInputWidget? = null
     private var paymentAmount: Double = 0.0
     private var clientSecret: String? = null
     private var paymentIntentId: String? = null
@@ -148,11 +148,10 @@ class CardPaymentActivity : AppCompatActivity() {
         
         // Solo crear CardInputWidget si no hay tarjeta guardada
         cardInputWidget = CardInputWidget(this)
-        binding.cardInputContainer.addView(cardInputWidget)
+        binding.cardInputContainer.addView(cardInputWidget!!)
         
         // Listener para validar la tarjeta - solo si se creó CardInputWidget
-        if (this::cardInputWidget.isInitialized) {
-            cardInputWidget.setCardValidCallback { isValid, _ ->
+        cardInputWidget?.setCardValidCallback { isValid, _ ->
                 // En modo setup, solo requerimos que la tarjeta sea válida
                 // En modo pago, requerimos tarjeta válida Y clientSecret (O que haya tarjeta guardada)
                 val hasValidPayment = if (isSetupMode) {
@@ -165,8 +164,8 @@ class CardPaymentActivity : AppCompatActivity() {
                 binding.payButton.isEnabled = hasValidPayment
                 
                 // Actualizar logos de tarjetas basado en el tipo detectado
-                val cardBrand = cardInputWidget.brand
-                updateCardLogos(cardBrand.code)
+                val cardBrand = cardInputWidget?.brand
+                cardBrand?.let { updateCardLogos(it.code) }
                 
                 // Log para debugging
                 Log.d(TAG, "Card validation - Valid: $isValid, ClientSecret: ${clientSecret != null}, HasSavedCard: ${PaymentMethodManager.hasSavedCard(this)}, Button enabled: ${binding.payButton.isEnabled}")
@@ -295,8 +294,8 @@ class CardPaymentActivity : AppCompatActivity() {
                 }
                 binding.payButton.isEnabled = hasValidPayment
                 
-                val cardBrand = cardInputWidget.brand
-                updateCardLogos(cardBrand.code)
+                val cardBrand = cardInputWidget?.brand
+                cardBrand?.let { updateCardLogos(it.code) }
                 
                 Log.d(TAG, "Card validation after switch - Valid: $isValid, Button enabled: ${binding.payButton.isEnabled}")
             }
@@ -327,15 +326,11 @@ class CardPaymentActivity : AppCompatActivity() {
                     }
                     
                     // Habilitar botón si la tarjeta es válida O hay tarjeta guardada
-                    val hasValidCard = if (this::cardInputWidget.isInitialized) {
-                        (cardInputWidget.cardParams != null) || PaymentMethodManager.hasSavedCard(this@CardPaymentActivity)
-                    } else {
-                        PaymentMethodManager.hasSavedCard(this@CardPaymentActivity)
-                    }
+                    val hasValidCard = cardInputWidget?.cardParams != null || PaymentMethodManager.hasSavedCard(this@CardPaymentActivity)
                     binding.payButton.isEnabled = hasValidCard
                     
                     Log.d(TAG, "Payment Intent creado: $paymentIntentId")
-                    Log.d(TAG, "Botón habilitado: $hasValidCard (CardWidget: ${this::cardInputWidget.isInitialized}, SavedCard: ${PaymentMethodManager.hasSavedCard(this@CardPaymentActivity)})")
+                    Log.d(TAG, "Botón habilitado: $hasValidCard (CardWidget: ${cardInputWidget != null}, SavedCard: ${PaymentMethodManager.hasSavedCard(this@CardPaymentActivity)})")
                 } else {
                     showError("Error preparando el pago: ${response.error}")
                 }
@@ -377,7 +372,7 @@ class CardPaymentActivity : AppCompatActivity() {
     }
     
     private fun processPayment() {
-        val cardParams = if (this::cardInputWidget.isInitialized) cardInputWidget.cardParams else null
+        val cardParams = cardInputWidget?.cardParams
         val hasSavedCard = PaymentMethodManager.hasSavedCard(this)
         
         // Permitir pago si hay nueva tarjeta válida O hay tarjeta guardada
@@ -404,11 +399,7 @@ class CardPaymentActivity : AppCompatActivity() {
                     kotlinx.coroutines.delay(1000)
                     
                     // Guardar información de la tarjeta
-                    val cardBrand = if (this::cardInputWidget.isInitialized) {
-                        cardInputWidget.brand.displayName
-                    } else {
-                        "Unknown"
-                    }
+                    val cardBrand = cardInputWidget?.brand?.displayName ?: "Unknown"
                     // En modo configuración, generamos un lastFour simulado para demo
                     val lastFour = generateMockLastFour()
                     
@@ -455,11 +446,7 @@ class CardPaymentActivity : AppCompatActivity() {
                     
                     if (cardParams != null) {
                         // Usar nueva tarjeta ingresada
-                        cardBrand = if (this::cardInputWidget.isInitialized) {
-                            cardInputWidget.brand.displayName
-                        } else {
-                            "Unknown"
-                        }
+                        cardBrand = cardInputWidget?.brand?.displayName ?: "Unknown"
                         lastFour = generateMockLastFour() // Simulado por seguridad
                         
                         Log.d(TAG, "Usando nueva tarjeta: $cardBrand")

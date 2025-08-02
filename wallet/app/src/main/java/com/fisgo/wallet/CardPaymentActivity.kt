@@ -286,7 +286,7 @@ class CardPaymentActivity : AppCompatActivity() {
             binding.cardInputContainer.addView(cardInputWidget)
             
             // Configurar listener
-            cardInputWidget.setCardValidCallback { isValid, _ ->
+            cardInputWidget?.setCardValidCallback { isValid, _ ->
                 val hasValidPayment = if (isSetupMode) {
                     isValid
                 } else {

@@ -28,23 +28,26 @@ class LoginActivity : AppCompatActivity() {
     private val googleSignInLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result: ActivityResult ->
+        Log.d(TAG, "Google Sign In result: ${result.resultCode}")
         if (result.resultCode == RESULT_OK) {
             val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
             try {
                 // El inicio de sesión con Google fue exitoso, autenticar con Firebase
                 val account = task.getResult(ApiException::class.java)!!
+                Log.d(TAG, "Google sign in success: ${account.email}")
                 Log.d(TAG, "firebaseAuthWithGoogle:" + account.id)
                 firebaseAuthWithGoogle(account.idToken!!)
             } catch (e: ApiException) {
                 // El inicio de sesión con Google falló
                 Log.w(TAG, "Google sign in failed", e)
-                Toast.makeText(this, "Error en el inicio de sesión con Google: ${e.message}", 
-                    Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Error en el inicio de sesión con Google: ${e.statusCode} - ${e.message}", 
+                    Toast.LENGTH_LONG).show()
                 binding.progressBar.visibility = View.GONE
             }
         } else {
             binding.progressBar.visibility = View.GONE
-            Log.w(TAG, "Google sign in failed: result code ${result.resultCode}")
+            Log.w(TAG, "Google sign in cancelled or failed: result code ${result.resultCode}")
+            Toast.makeText(this, "Inicio de sesión cancelado", Toast.LENGTH_SHORT).show()
         }
     }
     
@@ -127,12 +130,18 @@ class LoginActivity : AppCompatActivity() {
     }
     
     private fun signInWithGoogle() {
+        Log.d(TAG, "Iniciando sign in con Google")
         binding.progressBar.visibility = View.VISIBLE
-        val signInIntent = googleSignInClient.signInIntent
-        googleSignInLauncher.launch(signInIntent)
+        
+        // Cerrar sesión anterior si existe para forzar selección de cuenta
+        googleSignInClient.signOut().addOnCompleteListener {
+            val signInIntent = googleSignInClient.signInIntent
+            googleSignInLauncher.launch(signInIntent)
+        }
     }
     
     private fun firebaseAuthWithGoogle(idToken: String) {
+        Log.d(TAG, "Autenticando con Firebase usando token de Google")
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         auth.signInWithCredential(credential)
             .addOnCompleteListener(this) { task ->
@@ -140,12 +149,16 @@ class LoginActivity : AppCompatActivity() {
                 if (task.isSuccessful) {
                     // Inicio de sesión exitoso
                     Log.d(TAG, "signInWithCredential:success")
+                    val user = auth.currentUser
+                    Log.d(TAG, "Usuario autenticado: ${user?.email}")
+                    Toast.makeText(this, "Bienvenido ${user?.displayName ?: user?.email}", 
+                        Toast.LENGTH_SHORT).show()
                     goToMainScreen()
                 } else {
                     // Si falla el inicio de sesión, mostrar un mensaje al usuario
                     Log.w(TAG, "signInWithCredential:failure", task.exception)
-                    Toast.makeText(this, "Error de autenticación: ${task.exception?.message}", 
-                        Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Error de autenticación con Firebase: ${task.exception?.message}", 
+                        Toast.LENGTH_LONG).show()
                 }
             }
     }

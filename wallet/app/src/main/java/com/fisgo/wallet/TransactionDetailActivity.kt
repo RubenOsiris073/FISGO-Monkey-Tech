@@ -78,24 +78,35 @@ class TransactionDetailActivity : AppCompatActivity() {
         
         if (transactionId == null) {
             Log.e("TransactionDetail", "No transaction ID provided")
+            Toast.makeText(this, "Error: ID de transacción no válido", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
+        
+        Log.d("TransactionDetail", "Loading transaction detail for ID: $transactionId")
         
         lifecycleScope.launch {
             try {
                 val result = transactionService.getTransactionById(transactionId)
                 
                 result.onSuccess { transaction ->
-                    updateUI(transaction)
+                    Log.d("TransactionDetail", "Transaction detail loaded: ${transaction.id}")
+                    runOnUiThread {
+                        displayTransactionDetail(transaction)
+                    }
                 }.onFailure { error ->
                     Log.e("TransactionDetail", "Error loading transaction detail", error)
-                    // Mostrar error al usuario
-                    showError("No se pudo cargar el detalle de la transacción")
+                    runOnUiThread {
+                        Toast.makeText(this@TransactionDetailActivity, "Error cargando detalles: ${error.message}", Toast.LENGTH_SHORT).show()
+                        finish()
+                    }
                 }
             } catch (e: Exception) {
                 Log.e("TransactionDetail", "Exception loading transaction detail", e)
-                showError("Error inesperado: ${e.message}")
+                runOnUiThread {
+                    Toast.makeText(this@TransactionDetailActivity, "Error inesperado", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
             }
         }
     }

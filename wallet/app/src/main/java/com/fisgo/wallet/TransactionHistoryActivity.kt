@@ -127,19 +127,31 @@ class TransactionHistoryActivity : AppCompatActivity() {
                 val result = transactionService.getUserTransactions(userId)
                 
                 result.onSuccess { transactions ->
-                    Log.d("TransactionHistory", "Transactions loaded: ${transactions.size}")
-                    allTransactions = transactions.sortedByDescending { it.createdAt }
-                    updateUI()
-                    showLoading(false)
+                    Log.d("TransactionHistory", "Transactions loaded successfully: ${transactions.size}")
+                    runOnUiThread {
+                        allTransactions = transactions.sortedByDescending { it.createdAt }
+                        updateUI()
+                        showLoading(false)
+                        
+                        if (allTransactions.isEmpty()) {
+                            showEmptyState()
+                        } else {
+                            hideEmptyState()
+                        }
+                    }
                 }.onFailure { error ->
                     Log.e("TransactionHistory", "Error loading transactions", error)
-                    showEmptyState()
-                    showLoading(false)
+                    runOnUiThread {
+                        showEmptyState()
+                        showLoading(false)
+                    }
                 }
             } catch (e: Exception) {
                 Log.e("TransactionHistory", "Exception loading transactions", e)
-                showEmptyState()
-                showLoading(false)
+                runOnUiThread {
+                    showEmptyState()
+                    showLoading(false)
+                }
             }
         }
     }
@@ -156,9 +168,14 @@ class TransactionHistoryActivity : AppCompatActivity() {
             else -> allTransactions
         }
         
+        Log.d("TransactionHistory", "Applied filter '$filter': ${filteredTransactions.size} of ${allTransactions.size} transactions")
+        
         transactionAdapter.updateTransactions(filteredTransactions)
         
-        if (filteredTransactions.isEmpty()) {
+        if (filteredTransactions.isEmpty() && allTransactions.isNotEmpty()) {
+            // Mostrar mensaje de que no hay transacciones con este filtro
+            showEmptyState()
+        } else if (filteredTransactions.isEmpty()) {
             showEmptyState()
         } else {
             hideEmptyState()
@@ -191,22 +208,28 @@ class TransactionHistoryActivity : AppCompatActivity() {
     }
     
     private fun updateUI() {
-        val summary = transactionService.getTransactionSummary(allTransactions)
-        
-        // Formato mejorado para el total gastado con moneda mexicana
-        val currencyFormat = NumberFormat.getCurrencyInstance(Locale("es", "MX"))
-        val formattedTotal = currencyFormat.format(summary.totalSpent).replace("MX$", "$")
-        totalSpentText.text = formattedTotal
-        
-        // Formato mejorado para el conteo de transacciones
-        val transactionCountFormatted = if (summary.transactionCount == 1) {
-            "1 transacción"
-        } else {
-            "${summary.transactionCount} transacciones"
+        try {
+            val summary = transactionService.getTransactionSummary(allTransactions)
+            
+            // Formato mejorado para el total gastado con moneda mexicana
+            val currencyFormat = NumberFormat.getCurrencyInstance(Locale("es", "MX"))
+            val formattedTotal = currencyFormat.format(summary.totalSpent).replace("MX$", "$")
+            totalSpentText.text = formattedTotal
+            
+            // Formato mejorado para el conteo de transacciones
+            val transactionCountFormatted = if (summary.transactionCount == 1) {
+                "1 transacción"
+            } else {
+                "${summary.transactionCount} transacciones"
+            }
+            transactionCountText.text = summary.transactionCount.toString()
+            
+            Log.d("TransactionHistory", "UI updated - Total: $formattedTotal, Count: ${summary.transactionCount}")
+            
+            applyFilter(currentFilter)
+        } catch (e: Exception) {
+            Log.e("TransactionHistory", "Error updating UI", e)
         }
-        transactionCountText.text = summary.transactionCount.toString()
-        
-        applyFilter(currentFilter)
     }
     
     private fun showLoading(show: Boolean) {

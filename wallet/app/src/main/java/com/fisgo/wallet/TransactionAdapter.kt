@@ -44,6 +44,7 @@ class TransactionAdapter(
             "payment" -> transaction.merchantName ?: "Pago"
             "refund" -> "Reembolso"
             "transfer" -> "Transferencia"
+            "add_funds" -> "Recarga de saldo"
             else -> "Transacción"
         }
         
@@ -52,9 +53,9 @@ class TransactionAdapter(
         // Formato de monto con moneda mexicana
         val formattedAmount = currencyFormat.format(transaction.amount)
         val amountText = when (transaction.type) {
-            "payment" -> "-$formattedAmount".replace("MX$", "")
-            "refund" -> "+$formattedAmount".replace("MX$", "")
-            else -> formattedAmount.replace("MX$", "")
+            "payment" -> "-${formattedAmount.replace("MX$", "$")}"
+            "refund", "add_funds" -> "+${formattedAmount.replace("MX$", "$")}"
+            else -> formattedAmount.replace("MX$", "$")
         }
         holder.transactionAmount.text = amountText
         
@@ -62,7 +63,7 @@ class TransactionAdapter(
         val context = holder.itemView.context
         val amountColor = when (transaction.type) {
             "payment" -> context.getColor(android.R.color.holo_red_dark)
-            "refund" -> context.getColor(android.R.color.holo_green_dark)
+            "refund", "add_funds" -> context.getColor(android.R.color.holo_green_dark)
             else -> context.getColor(android.R.color.black)
         }
         holder.transactionAmount.setTextColor(amountColor)
@@ -72,6 +73,7 @@ class TransactionAdapter(
             "payment" -> android.R.drawable.ic_menu_send
             "refund" -> android.R.drawable.ic_menu_revert
             "transfer" -> android.R.drawable.ic_menu_sort_by_size
+            "add_funds" -> android.R.drawable.ic_input_add
             else -> android.R.drawable.ic_menu_info_details
         }
         holder.transactionIcon.setImageResource(iconResource)

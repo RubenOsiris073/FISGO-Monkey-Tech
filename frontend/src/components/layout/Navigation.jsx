@@ -28,6 +28,7 @@ const Navigation = ({ onSidebarToggle }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
   
   // Ref para preservar la posición del scroll del contenido principal
   const scrollPositionRef = useRef(0);
@@ -87,6 +88,20 @@ const Navigation = ({ onSidebarToggle }) => {
     return 'Usuario';
   };
 
+  // Debug para verificar datos del usuario
+  useEffect(() => {
+    if (user) {
+      console.log('Navigation - User data:', {
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+        uid: user.uid
+      });
+      // Reset avatar error cuando cambie el usuario
+      setAvatarError(false);
+    }
+  }, [user]);
+
   // Verificar si un enlace está activo
   const isActive = (path) => {
     return location.pathname.startsWith(path);
@@ -108,14 +123,22 @@ const Navigation = ({ onSidebarToggle }) => {
         
         {/* Perfil de usuario */}
         <div className="sidebar-user-profile">
-          {user?.photoURL ? (
+          {user?.photoURL && !avatarError ? (
             <img 
               src={user.photoURL} 
               alt="Avatar" 
               className="sidebar-avatar"
+              onError={(e) => {
+                console.log('Error cargando imagen de perfil:', e.target.src);
+                setAvatarError(true);
+              }}
+              onLoad={() => {
+                console.log('Imagen de perfil cargada correctamente:', user.photoURL);
+                setAvatarError(false);
+              }}
             />
           ) : (
-            <div className="sidebar-avatar-placeholder">
+            <div className="sidebar-user-icon">
               <FaUser />
             </div>
           )}

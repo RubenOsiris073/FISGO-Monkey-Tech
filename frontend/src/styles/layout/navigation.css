@@ -26,7 +26,6 @@
   backdrop-filter: blur(10px) !important;
   will-change: width !important; /* Optimización para la transición */
   max-height: 100vh !important; /* Limitar altura máxima */
-  scrollbar-gutter: stable !important; /* Evitar saltos de layout con la barra de scroll */
 }
 
 .sidebar-navigation.collapsed {
@@ -594,26 +593,20 @@
   100% { transform: translateY(100vh); }
 }
 
-/* Efectos de scroll personalizado */
+/* Ocultar barra de desplazamiento completamente */
 .sidebar-navigation::-webkit-scrollbar,
 .sidebar-menu::-webkit-scrollbar {
-  width: 4px;
+  display: none;
 }
 
-.sidebar-navigation::-webkit-scrollbar-track,
-.sidebar-menu::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+.sidebar-navigation {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-.sidebar-navigation::-webkit-scrollbar-thumb,
-.sidebar-menu::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(0, 123, 255, 0.3), rgba(0, 86, 179, 0.3));
-  border-radius: 2px;
-}
-
-.sidebar-navigation::-webkit-scrollbar-thumb:hover,
-.sidebar-menu::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, rgba(0, 123, 255, 0.5), rgba(0, 86, 179, 0.5));
+.sidebar-menu {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* ============================================================================

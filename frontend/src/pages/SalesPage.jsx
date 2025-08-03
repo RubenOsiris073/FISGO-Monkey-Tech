@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Button, Card } from 'react-bootstrap';
-import { FaDownload, FaChartLine, FaShoppingCart, FaMoneyBillWave } from 'react-icons/fa';
+import { Button } from 'react-bootstrap';
+import { FaDownload, FaShoppingCart } from 'react-icons/fa';
 import SalesHistory from '../components/SalesHistory/SalesHistory';
 import InvoiceModal from '../components/SalesHistory/InvoiceModal';
 import { generateSalesReportPDF } from '../utils/pdfGenerator';
@@ -14,21 +14,7 @@ const SalesPage = () => {
   const [selectedSale, setSelectedSale] = useState(null);
   const [downloading, setDownloading] = useState(false);
   const [isComponentMounted, setIsComponentMounted] = useState(false);
-  const [salesData, setSalesData] = useState([]); // Estado para almacenar todas las ventas
-  
-  // Función para formatear moneda de manera consistente en toda la aplicación
-  const formatCurrency = (amount) => {
-    if (amount === null || amount === undefined || isNaN(amount)) {
-      return '$0.00';
-    }
-    
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: 'MXN',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(Number(amount));
-  };
+  const [salesData, setSalesData] = useState([]);
 
   // Marcar el componente como montado después de un breve retraso
   useEffect(() => {
@@ -90,7 +76,7 @@ const SalesPage = () => {
             <div>
               <h1 className="sales-title">
                 <FaShoppingCart className="me-3" />
-                Gestión de Ventas
+                Historial de Ventas
               </h1>
               <p className="sales-subtitle">
                 Visualice, analice y administre el historial de transacciones
@@ -115,46 +101,6 @@ const SalesPage = () => {
                 </>
               )}
             </Button>
-          </div>
-          
-          {/* Estadísticas de ventas */}
-          <div className="sales-stats-grid">
-            <div className="sales-stat-card">
-              <div className="sales-stat-icon">
-                <FaShoppingCart />
-              </div>
-              <div className="sales-stat-value">
-                {salesData.length.toLocaleString('es-MX')}
-              </div>
-              <div className="sales-stat-label">Total de Ventas</div>
-              <small className="text-muted">Transacciones registradas</small>
-            </div>
-            
-            <div className="sales-stat-card">
-              <div className="sales-stat-icon" style={{ backgroundColor: 'rgba(40, 167, 69, 0.15)', color: 'var(--bs-success)' }}>
-                <FaMoneyBillWave />
-              </div>
-              <div className="sales-stat-value sales-stat-value-money">
-                {salesData.length > 0 
-                  ? formatCurrency(salesData.reduce((sum, sale) => sum + (sale.total || 0), 0))
-                  : '$0.00'}
-              </div>
-              <div className="sales-stat-label">Ingresos Totales</div>
-              <small className="text-muted">Suma de todas las ventas</small>
-            </div>
-            
-            <div className="sales-stat-card">
-              <div className="sales-stat-icon" style={{ backgroundColor: 'rgba(13, 110, 253, 0.15)', color: 'var(--bs-primary)' }}>
-                <FaChartLine />
-              </div>
-              <div className="sales-stat-value sales-stat-value-money">
-                {salesData.length > 0 
-                  ? formatCurrency(salesData.reduce((sum, sale) => sum + (sale.total || 0), 0) / salesData.length)
-                  : '$0.00'}
-              </div>
-              <div className="sales-stat-label">Valor Promedio</div>
-              <small className="text-muted">Por transacción</small>
-            </div>
           </div>
         </div>
         

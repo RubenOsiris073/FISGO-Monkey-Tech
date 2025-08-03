@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useCallback, useRef, memo, useMemo } from 'react';
 import { Table, Spinner, Card, Alert, Button, Row, Col, Form, Badge } from 'react-bootstrap';
-import { FaDownload, FaFilter, FaTimes, FaEye, FaCalendarAlt, FaShoppingCart, FaSearch } from 'react-icons/fa';
+import { FaDownload, FaEye, FaSearch, FaShoppingCart } from 'react-icons/fa';
 import apiService from '../../services/apiService';
 import { toast } from 'react-toastify';
 import InvoiceModal from './InvoiceModal';
@@ -41,40 +41,50 @@ const SalesHistory = memo(({ onGenerateInvoice, onSalesDataUpdate }) => {
     onSalesDataUpdateRef.current = onSalesDataUpdate;
   }, [onSalesDataUpdate]);
 
-  // Estados para filtros
-  const [filters, setFilters] = useState({
-    startDate: '',
-    paymentMethod: ''
-  });
-  
-  // Estado para controlar el panel de filtros
-  const [showFilters, setShowFilters] = useState(false);
-
-  // Función para cargar ventas - SIN onSalesDataUpdate en dependencias
-  const loadSales = useCallback(async () => {
+    // Función para cargar ventas - usando el mismo endpoint que el dashboard
+  const loadSales = useCallback(async (loadMore = false) => {
     try {
-      setLoading(true);
+      setLoading(!loadMore);
+      setLoadingMore(loadMore);
       setError(null);
+
+      // Usar el mismo método que el dashboard para obtener datos reales
+      const salesResponse = await apiService.getSalesDataFromSheets();
       
-      // Obtener ventas
-      const salesData = await apiService.getSales();
-      
-      // Verificar que salesData sea un array
-      if (Array.isArray(salesData)) {
-        console.log('Ventas cargadas correctamente:', salesData.length);
+      // Verificar que salesResponse sea válido y tenga datos
+      if (salesResponse && salesResponse.success && Array.isArray(salesResponse.data)) {
+        console.log('Ventas cargadas correctamente desde Sheets:', salesResponse.data.length);
+        
+        // Convertir los datos de Google Sheets al formato esperado por el componente
+        const salesData = salesResponse.data.map((sale, index) => ({
+          id: sale.ID || sale.id || `sheet-${index}`,
+          timestamp: sale.Timestamp || sale.timestamp || sale.Fecha || sale.fecha || sale.Date,
+          total: parseFloat(sale.Total || sale.venta_total || sale.total || 0),
+          payment_method: sale['Método de Pago'] || sale.payment_method || sale.metodo_pago || 'Efectivo',
+          items: sale.Productos || sale.items || sale.productos || [],
+          client_name: sale['Nombre Cliente'] || sale.client_name || sale.nombre_cliente || 'Cliente General',
+          status: sale.Status || sale.status || 'completed',
+          // Campos adicionales que podrían estar en Google Sheets
+          vendor: sale.Vendedor || sale.vendor,
+          location: sale.Ubicación || sale.location,
+          notes: sale.Notas || sale.notes || sale.observaciones,
+          // Mantener los datos originales para referencia
+          originalData: sale
+        }));
+        
         setSales(salesData);
         setFilteredSales(salesData);
-        setDisplayedSales(salesData.slice(0, itemsPerPage)); // Mostrar solo las primeras ventas por página
+        setDisplayedSales(salesData.slice(0, itemsPerPage));
         
         // Enviar los datos al componente padre usando la referencia estable
         if (typeof onSalesDataUpdateRef.current === 'function') {
           onSalesDataUpdateRef.current(salesData);
         }
       } else {
-        console.error('getSales no devolvió un array:', salesData);
+        console.error('getSalesDataFromSheets no devolvió datos válidos:', salesResponse);
         setSales([]);
         setFilteredSales([]);
-        setError('La respuesta del servidor no tiene el formato esperado');
+        setError('No se pudieron cargar los datos de ventas desde Google Sheets');
         
         // Informar al padre que no hay datos
         if (typeof onSalesDataUpdateRef.current === 'function') {
@@ -100,14 +110,9 @@ const SalesHistory = memo(({ onGenerateInvoice, onSalesDataUpdate }) => {
       }
     } finally {
       setLoading(false);
-      // Marcar el componente como montado después de la primera carga
-      if (!isComponentMounted) {
-        setTimeout(() => {
-          setIsComponentMounted(true);
-        }, 500);
-      }
+      setLoadingMore(false);
     }
-  }, [isComponentMounted]); // Solo isComponentMounted como dependencia
+  }, [itemsPerPage, isComponentMounted]);
 
   // Función para cargar ventas paginadas
   const loadSalesPaginated = useCallback(async (reset = false) => {
@@ -142,31 +147,6 @@ const SalesHistory = memo(({ onGenerateInvoice, onSalesDataUpdate }) => {
     }
   }, [itemsPerPage, lastSaleTimestamp, useBackendCache]);
 
-  // Función para aplicar filtros - declarada antes de los useEffect
-  const applyFilters = useCallback(() => {
-    if (!Array.isArray(sales)) return;
-    
-    let filtered = sales.filter(sale => {
-      // Filtro por método de pago
-      if (filters.paymentMethod && 
-          sale.paymentMethod !== filters.paymentMethod) {
-        return false;
-      }
-      
-      // Filtro por fecha
-      const saleDate = new Date(sale.date || sale.fecha || sale.timestamp);
-      if (filters.startDate && new Date(filters.startDate) > saleDate) {
-        return false;
-      }
-      
-      return true;
-    });
-    
-    setFilteredSales(filtered);
-    setDisplayedSales(filtered.slice(0, itemsPerPage)); // Actualizar ventas mostradas
-    setHasMoreData(filtered.length > itemsPerPage); // Verificar si hay más datos para cargar
-  }, [sales, filters.startDate, filters.paymentMethod, itemsPerPage]);
-
   // Función para cargar más ventas
   const loadMoreSales = async () => {
     if (loadingMore || !hasMoreData) return;
@@ -194,25 +174,6 @@ const SalesHistory = memo(({ onGenerateInvoice, onSalesDataUpdate }) => {
     loadSalesPaginated(true);
     // eslint-disable-next-line
   }, [useBackendCache]);
-
-  // useEffect para aplicar filtros cuando cambien
-  useEffect(() => {
-    applyFilters();
-  }, [applyFilters]);
-
-  // Manejar cambios en los filtros
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
-  };
-  
-  // Limpiar todos los filtros
-  const clearFilters = () => {
-    setFilters({
-      startDate: '',
-      paymentMethod: ''
-    });
-  };
 
   const handleViewInvoice = (sale) => {
     setSelectedSale(sale);
@@ -331,131 +292,8 @@ const SalesHistory = memo(({ onGenerateInvoice, onSalesDataUpdate }) => {
 
   return (
     <>
-      {/* Header principal */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h5 className="mb-0">Historial de Ventas</h5>
-        <div className="d-flex gap-2">
-          <Button 
-            variant="outline-primary" 
-            size="sm" 
-            className="px-3 py-2"
-            onClick={() => setShowFilters(!showFilters)}
-            title={showFilters ? 'Ocultar filtros' : 'Mostrar filtros'}
-          >
-            <FaFilter size="12" className="me-1" /> 
-            {showFilters ? 'Ocultar' : 'Filtros'}
-          </Button>
-          <Button 
-            variant="outline-secondary" 
-            size="sm"
-            className="px-3 py-2"
-            onClick={loadSales}
-            title="Actualizar datos"
-          >
-            <i className="bi bi-arrow-clockwise" style={{ fontSize: '12px' }} />
-            <span className="ms-1">Recargar</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* Panel principal con nuevo diseño */}
+      {/* Panel principal */}
       <div className="sales-history-container">
-        <h5 className="sales-history-title p-3">
-          <FaShoppingCart className="me-2 text-primary" />
-          Historial de Ventas
-          <Button 
-            variant={showFilters ? "outline-primary" : "light"}
-            size="sm" 
-            className="ms-auto sales-history-btn"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <FaFilter className="me-1" />
-            {showFilters ? 'Ocultar Filtros' : 'Mostrar Filtros'}
-          </Button>
-        </h5>
-        
-        {/* Panel de filtros plegable con nuevo diseño */}
-        {showFilters && (
-          <div className="sales-history-filters">
-            <Form>
-              <Row>
-                <Col md={3}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Fecha Inicio</Form.Label>
-                    <div className="input-group">
-                      <span className="input-group-text">
-                        <FaCalendarAlt size={14} />
-                      </span>
-                      <Form.Control 
-                        type="date" 
-                        name="startDate"
-                        value={filters.startDate}
-                        onChange={handleFilterChange}
-                        className="rounded-end"
-                      />
-                    </div>
-                  </Form.Group>
-                </Col>
-                <Col md={3}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Método de Pago</Form.Label>
-                    <Form.Control 
-                      type="text" 
-                      name="paymentMethod"
-                      value={filters.paymentMethod}
-                      onChange={handleFilterChange}
-                      placeholder="Efectivo, Tarjeta, etc."
-                      className="rounded-pill"
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-              
-              {/* Filtros aplicados */}
-              {(filters.startDate || filters.paymentMethod) && (
-                <div className="mb-3">
-                  {filters.startDate && (
-                    <div className="filter-pill">
-                      <span>Desde: {filters.startDate}</span>
-                      <span 
-                        className="filter-pill-close"
-                        onClick={() => handleFilterChange({ target: { name: 'startDate', value: '' } })}
-                      >
-                        <FaTimes size={12} />
-                      </span>
-                    </div>
-                  )}
-                  {filters.paymentMethod && (
-                    <div className="filter-pill">
-                      <span>Método: {filters.paymentMethod}</span>
-                      <span 
-                        className="filter-pill-close"
-                        onClick={() => handleFilterChange({ target: { name: 'paymentMethod', value: '' } })}
-                      >
-                        <FaTimes size={12} />
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              <div className="d-flex justify-content-end">
-                <Button 
-                  variant="outline-danger" 
-                  size="sm"
-                  onClick={clearFilters}
-                  className="sales-history-btn"
-                  disabled={!filters.startDate && !filters.paymentMethod}
-                >
-                  <FaTimes className="me-1" /> Limpiar filtros
-                </Button>
-                <span className="ms-3 my-auto text-muted">
-                  {filteredSales.length} de {sales.length} ventas mostradas
-                </span>
-              </div>
-            </Form>
-          </div>
-        )}
         
         {/* Tabla de ventas optimizada */}
         <div className="sales-history-table-container">
@@ -575,12 +413,7 @@ const SaleRow = memo(({ sale, onViewInvoice, onViewProducts, onDownloadInvoice }
       <Badge bg="primary" pill className="px-2 py-1">{sale.id}</Badge>
     </td>
     <td>
-      <div className="d-flex align-items-center">
-        <div className="me-2 rounded-circle p-1" style={{ backgroundColor: 'rgba(13, 110, 253, 0.1)' }}>
-          <FaCalendarAlt size={12} className="text-primary" />
-        </div>
-        <span>{sale.formattedDate}</span>
-      </div>
+      <span>{sale.formattedDate}</span>
     </td>
     <td>
       <div className="d-inline-block text-truncate" style={{ maxWidth: "150px" }}>

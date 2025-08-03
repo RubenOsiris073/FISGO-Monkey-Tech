@@ -88,9 +88,6 @@ export const MinimalDonutChart = ({ data, title }) => {
 
   return (
     <div className="apex-chart-container">
-      <div className="chart-header">
-        <h6 className="chart-title">{title}</h6>
-      </div>
       <Chart
         options={options}
         series={series}
@@ -166,11 +163,6 @@ export const PieChart = ({ data, title, height = 300 }) => {
 
   return (
     <div className="apex-chart-container">
-      {title && (
-        <div className="chart-header">
-          <h6 className="chart-title">{title}</h6>
-        </div>
-      )}
       <Chart
         options={options}
         series={series}

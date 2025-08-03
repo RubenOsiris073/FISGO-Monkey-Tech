@@ -90,9 +90,6 @@ export const RealtimeLineChart = ({ data, title }) => {
 
   return (
     <div className="apex-chart-container">
-      <div className="chart-header">
-        <h6 className="chart-title">{title}</h6>
-      </div>
       <Chart
         options={options}
         series={series}
@@ -197,9 +194,6 @@ export const ProgressAreaChart = ({ data, title, showLabels = false }) => {
 
   return (
     <div className={`apex-chart-container ${showLabels ? '' : 'small'}`}>
-      <div className="chart-header">
-        <h6 className="chart-title">{title}</h6>
-      </div>
       <Chart
         options={options}
         series={series}
@@ -251,12 +245,6 @@ export const InventoryTrendChart = ({ data, title }) => {
 
   return (
     <div className="apex-chart-container small">
-      <div className="chart-header">
-        <h6 className="chart-title">{title}</h6>
-        <div className="chart-subtitle">
-          <span className="text-warning">⚠️ {series[0]?.data[series[0]?.data.length - 1] || 0} productos con stock bajo</span>
-        </div>
-      </div>
       <Chart
         options={options}
         series={series}

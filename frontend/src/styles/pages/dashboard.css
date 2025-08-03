@@ -432,15 +432,15 @@
 }
 
 .chart-card.large {
-  min-height: 350px;
+  min-height: 450px;
 }
 
 .chart-card.medium {
-  min-height: 300px;
+  min-height: 420px;
 }
 
 .chart-card.small {
-  min-height: 250px;
+  min-height: 320px;
 }
 
 .chart-header {
@@ -457,7 +457,7 @@
 }
 
 .chart-content {
-  padding: var(--space-4);
+  padding: var(--space-6);
   height: calc(100% - 65px);
 }
 

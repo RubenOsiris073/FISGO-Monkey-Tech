@@ -1,9 +1,9 @@
 <resources>
-    <string name="app_name">MMM Aguachile</string>
+    <string name="app_name">Fisgo Wallet</string>
     <string name="navigation_drawer_open">Abrir menú de navegación</string>
     <string name="navigation_drawer_close">Cerrar menú de navegación</string>
-    <string name="nav_header_title">MMM Aguachile</string>
-    <string name="nav_header_subtitle">app@mmm-aguachile.com</string>
+    <string name="nav_header_title">Fisgo Wallet</string>
+    <string name="nav_header_subtitle">wallet@fisgo.com</string>
     <string name="nav_header_desc">Encabezado de navegación</string>
     <string name="action_settings">Configuración</string>
 

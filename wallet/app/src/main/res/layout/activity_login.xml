@@ -54,9 +54,9 @@
                 android:layout_height="wrap_content"
                 android:background="@drawable/login_form_background"
                 android:orientation="vertical"
-                android:padding="32dp"
-                android:layout_marginStart="16dp"
-                android:layout_marginEnd="16dp"
+                android:padding="40dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
@@ -90,8 +90,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Correo Electrónico"
-                    android:textColorHint="#B0BEC5"
-                    app:boxBackgroundColor="#22FFFFFF"
+                    android:textColorHint="#666666"
+                    app:boxBackgroundColor="#DDFFFFFF"
                     app:boxStrokeColor="#007AFF"
                     app:boxStrokeWidth="2dp"
                     app:boxCornerRadiusBottomEnd="12dp"
@@ -99,14 +99,15 @@
                     app:boxCornerRadiusTopEnd="12dp"
                     app:boxCornerRadiusTopStart="12dp"
                     app:hintTextColor="#007AFF"
-                    android:layout_marginBottom="16dp">
+                    android:layout_marginBottom="20dp">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/emailEditText"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="textEmailAddress"
-                        android:textColor="@android:color/white"
+                        android:textColor="#000000"
+                        android:textColorHint="#666666"
                         android:textSize="16sp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -116,8 +117,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Contraseña"
-                    android:textColorHint="#B0BEC5"
-                    app:boxBackgroundColor="#22FFFFFF"
+                    android:textColorHint="#666666"
+                    app:boxBackgroundColor="#DDFFFFFF"
                     app:boxStrokeColor="#007AFF"
                     app:boxStrokeWidth="2dp"
                     app:passwordToggleTint="#007AFF"
@@ -127,31 +128,32 @@
                     app:boxCornerRadiusTopStart="12dp"
                     app:hintTextColor="#007AFF"
                     app:passwordToggleEnabled="true"
-                    android:layout_marginBottom="24dp">
+                    android:layout_marginBottom="28dp">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/passwordEditText"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="textPassword"
-                        android:textColor="@android:color/white"
+                        android:textColor="#000000"
+                        android:textColorHint="#666666"
                         android:textSize="16sp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/loginButton"
                     android:layout_width="match_parent"
-                    android:layout_height="56dp"
+                    android:layout_height="64dp"
                     android:text="Iniciar Sesión"
                     android:textAllCaps="false"
                     android:textColor="#FFFFFF"
-                    android:textSize="16sp"
+                    android:textSize="18sp"
                     android:textStyle="bold"
                     app:backgroundTint="#007AFF"
                     app:cornerRadius="16dp"
                     app:rippleColor="#FFFFFF"
                     android:elevation="4dp"
-                    android:layout_marginBottom="24dp" />
+                    android:layout_marginBottom="28dp" />
 
                 <LinearLayout
                     android:id="@+id/dividerLayout"
@@ -159,7 +161,7 @@
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:layout_marginBottom="24dp">
+                    android:layout_marginBottom="28dp">
 
                     <View
                         android:layout_width="0dp"
@@ -187,7 +189,7 @@
                 <com.google.android.gms.common.SignInButton
                     android:id="@+id/googleSignInButton"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="64dp"
                     app:buttonSize="wide" />
 
             </LinearLayout>

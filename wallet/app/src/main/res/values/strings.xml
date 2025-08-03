@@ -13,4 +13,5 @@
     
     <!-- Google Sign In -->
     <string name="default_web_client_id">554362380797-dgh2flmelenhfljl7ecpqebj2sc2kf6k.apps.googleusercontent.com</string>
+    <string name="server_client_id">554362380797-dgh2flmelenhfljl7ecpqebj2sc2kf6k.apps.googleusercontent.com</string>
 </resources>

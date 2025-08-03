@@ -77,19 +77,41 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
         
+        Log.d(TAG, "=== LoginActivity onCreate ===")
+        
         // Inicializar Firebase Auth
         auth = Firebase.auth
+        Log.d(TAG, "Firebase Auth inicializado")
         
-        // Configurar Google Sign In
+        // Verificar Google Play Services
+        try {
+            val gmsAvailable = com.google.android.gms.common.GoogleApiAvailability.getInstance()
+            val resultCode = gmsAvailable.isGooglePlayServicesAvailable(this)
+            Log.d(TAG, "Google Play Services disponible: ${resultCode == com.google.android.gms.common.ConnectionResult.SUCCESS}")
+            if (resultCode != com.google.android.gms.common.ConnectionResult.SUCCESS) {
+                Log.w(TAG, "Google Play Services no disponible, código: $resultCode")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error verificando Google Play Services", e)
+        }
+        
+        // Configurar Google Sign In con fallback
+        val clientId = getString(R.string.default_web_client_id)
+        Log.d(TAG, "Configurando Google Sign In con client ID: $clientId")
+        
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(getString(R.string.default_web_client_id))
+            .requestIdToken(clientId)
             .requestEmail()
             .requestProfile()
             .build()
             
         googleSignInClient = GoogleSignIn.getClient(this, gso)
         
-        Log.d(TAG, "Google Sign In configurado con client ID: ${getString(R.string.default_web_client_id)}")
+        // Verificar si tenemos configuración válida
+        val account = GoogleSignIn.getLastSignedInAccount(this)
+        Log.d(TAG, "Última cuenta autenticada: ${account?.email ?: "ninguna"}")
+        
+        Log.d(TAG, "Google Sign In configurado correctamente")
         
         // Configurar listener del botón de login
         binding.loginButton.setOnClickListener {
@@ -98,6 +120,7 @@ class LoginActivity : AppCompatActivity() {
         
         // Configurar listener del botón de login con Google
         binding.googleSignInButton.setOnClickListener {
+            Log.d(TAG, "Botón Google Sign In presionado")
             signInWithGoogle()
         }
         
@@ -150,29 +173,44 @@ class LoginActivity : AppCompatActivity() {
     }
     
     private fun signInWithGoogle() {
-        Log.d(TAG, "Iniciando sign in con Google")
+        Log.d(TAG, "=== Iniciando Google Sign In ===")
         binding.progressBar.visibility = View.VISIBLE
         
         try {
-            // Verificar si Google Play Services está disponible
+            // Verificar configuración de Google Sign In
             val account = GoogleSignIn.getLastSignedInAccount(this)
-            if (account != null) {
-                Log.d(TAG, "Usuario ya autenticado con Google: ${account.email}")
-                googleSignInClient.signOut().addOnCompleteListener {
-                    Log.d(TAG, "Sesión anterior cerrada, iniciando nueva")
+            Log.d(TAG, "Cuenta previa: ${account?.email ?: "ninguna"}")
+            
+            // Limpiar cualquier sesión anterior
+            googleSignInClient.signOut().addOnCompleteListener { signOutTask ->
+                Log.d(TAG, "Sign out completado: ${signOutTask.isSuccessful}")
+                
+                try {
+                    val signInIntent = googleSignInClient.signInIntent
+                    Log.d(TAG, "Intent de Google Sign In creado, iniciando actividad...")
+                    googleSignInLauncher.launch(signInIntent)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error al crear intent de Google Sign In", e)
+                    binding.progressBar.visibility = View.GONE
+                    Toast.makeText(this, "Error al inicializar Google Sign In: ${e.message}", 
+                        Toast.LENGTH_LONG).show()
+                }
+            }.addOnFailureListener { e ->
+                Log.e(TAG, "Error en sign out", e)
+                // Intentar de todas formas
+                try {
                     val signInIntent = googleSignInClient.signInIntent
                     googleSignInLauncher.launch(signInIntent)
+                } catch (ex: Exception) {
+                    Log.e(TAG, "Error crítico en Google Sign In", ex)
+                    binding.progressBar.visibility = View.GONE
+                    Toast.makeText(this, "Error crítico: ${ex.message}", Toast.LENGTH_LONG).show()
                 }
-            } else {
-                Log.d(TAG, "No hay sesión previa, iniciando sign in")
-                val signInIntent = googleSignInClient.signInIntent
-                googleSignInLauncher.launch(signInIntent)
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error al iniciar Google Sign In", e)
+            Log.e(TAG, "Error general en signInWithGoogle", e)
             binding.progressBar.visibility = View.GONE
-            Toast.makeText(this, "Error al inicializar Google Sign In: ${e.message}", 
-                Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Error inesperado: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
     

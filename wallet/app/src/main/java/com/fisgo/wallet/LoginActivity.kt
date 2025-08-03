@@ -27,43 +27,54 @@ class LoginActivity : AppCompatActivity() {
     private val googleSignInLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result: ActivityResult ->
-        Log.d(TAG, "Google Sign In result: ${result.resultCode}")
+        Log.d(TAG, "=== Google Sign In Result Received ===")
+        Log.d(TAG, "Result code: ${result.resultCode}")
+        Log.d(TAG, "RESULT_OK = $RESULT_OK")
+        Log.d(TAG, "RESULT_CANCELED = $RESULT_CANCELED")
+        Log.d(TAG, "Intent data: ${result.data}")
+        
         binding.progressBar.visibility = View.GONE
         
         when (result.resultCode) {
             RESULT_OK -> {
+                Log.d(TAG, "Resultado OK - procesando datos...")
                 val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
                 try {
                     val account = task.getResult(ApiException::class.java)!!
                     Log.d(TAG, "Google sign in success: ${account.email}")
                     Log.d(TAG, "Account ID: ${account.id}")
+                    Log.d(TAG, "Display Name: ${account.displayName}")
                     Log.d(TAG, "ID Token available: ${account.idToken != null}")
+                    Log.d(TAG, "ID Token length: ${account.idToken?.length ?: 0}")
                     
                     if (account.idToken != null) {
                         firebaseAuthWithGoogle(account.idToken!!)
                     } else {
-                        Log.e(TAG, "ID Token is null")
-                        Toast.makeText(this, "Error: No se pudo obtener el token de autenticación", 
+                        Log.e(TAG, "ID Token is null - posible problema de configuración")
+                        Toast.makeText(this, "Error: Token de autenticación nulo. Verifique la configuración de Firebase.", 
                             Toast.LENGTH_LONG).show()
                     }
                 } catch (e: ApiException) {
                     Log.w(TAG, "Google sign in failed with status code: ${e.statusCode}", e)
+                    Log.w(TAG, "Error details: ${e.localizedMessage}")
                     val errorMsg = when (e.statusCode) {
                         12501 -> "Operación cancelada por el usuario"
-                        12502 -> "Error de red"
-                        12500 -> "Error interno"
-                        else -> "Error ${e.statusCode}: ${e.message}"
+                        12502 -> "Error de red - verifique su conexión"
+                        12500 -> "Error interno de Google Services"
+                        7 -> "Error de red - sin conexión"
+                        10 -> "Error de desarrollo - configuración incorrecta"
+                        else -> "Error ${e.statusCode}: ${e.localizedMessage}"
                     }
                     Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show()
                 }
             }
             RESULT_CANCELED -> {
-                Log.w(TAG, "Google sign in cancelled by user")
-                Toast.makeText(this, "Inicio de sesión cancelado", Toast.LENGTH_SHORT).show()
+                Log.w(TAG, "Google sign in cancelled by user - código -1")
+                Toast.makeText(this, "Inicio de sesión cancelado por el usuario", Toast.LENGTH_SHORT).show()
             }
             else -> {
-                Log.w(TAG, "Google sign in failed with result code: ${result.resultCode}")
-                Toast.makeText(this, "Error inesperado en el inicio de sesión", Toast.LENGTH_SHORT).show()
+                Log.w(TAG, "Google sign in failed with unexpected result code: ${result.resultCode}")
+                Toast.makeText(this, "Error inesperado (código: ${result.resultCode})", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -87,9 +98,19 @@ class LoginActivity : AppCompatActivity() {
         try {
             val gmsAvailable = com.google.android.gms.common.GoogleApiAvailability.getInstance()
             val resultCode = gmsAvailable.isGooglePlayServicesAvailable(this)
-            Log.d(TAG, "Google Play Services disponible: ${resultCode == com.google.android.gms.common.ConnectionResult.SUCCESS}")
-            if (resultCode != com.google.android.gms.common.ConnectionResult.SUCCESS) {
-                Log.w(TAG, "Google Play Services no disponible, código: $resultCode")
+            Log.d(TAG, "Google Play Services check result: $resultCode")
+            Log.d(TAG, "SUCCESS = ${com.google.android.gms.common.ConnectionResult.SUCCESS}")
+            
+            if (resultCode == com.google.android.gms.common.ConnectionResult.SUCCESS) {
+                Log.d(TAG, "✅ Google Play Services disponible y actualizado")
+            } else {
+                Log.w(TAG, "❌ Google Play Services no disponible o desactualizado")
+                if (gmsAvailable.isUserResolvableError(resultCode)) {
+                    Log.w(TAG, "Error resolvible por el usuario")
+                    gmsAvailable.getErrorDialog(this, resultCode, 9000)?.show()
+                } else {
+                    Log.e(TAG, "Error no resolvible en Google Play Services")
+                }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error verificando Google Play Services", e)

@@ -164,10 +164,6 @@ const InvoiceModal = ({ show, onHide, sale }) => {
       </Modal.Body>
       
       <Modal.Footer className="d-flex justify-content-center align-items-center">
-        <Button variant="secondary" size="sm" onClick={onHide} className="me-2 px-2 py-1">
-          Cerrar
-        </Button>
-        
         {/* Botón principal mejorado */}
         <Button 
           variant="primary" 

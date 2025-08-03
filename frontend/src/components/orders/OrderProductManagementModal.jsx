@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { Modal, Button, Alert, Badge, Table } from 'react-bootstrap';
+import { FaReceipt, FaInfoCircle, FaFilePdf, FaTimes } from 'react-icons/fa';
 import { toast } from 'react-toastify';
+
+// Estilos
+import '../../styles/components/modals.css';
 
 const OrderProductManagementModal = ({ 
   show, 
@@ -238,11 +242,19 @@ const OrderProductManagementModal = ({
 
   return (
     <Modal show={show} onHide={handleClose} centered size="lg">
-      <Modal.Header closeButton>
+      <Modal.Header>
         <Modal.Title>
-          <i className="bi bi-receipt me-2"></i>
+          <FaReceipt className="me-2" />
           Detalles de los Productos de la Venta
         </Modal.Title>
+        <Button 
+          variant="link" 
+          className="btn-close p-0 ms-auto" 
+          onClick={handleClose}
+          style={{ fontSize: '1.5rem', color: '#6c757d' }}
+        >
+          <FaTimes />
+        </Button>
       </Modal.Header>
       
       <Modal.Body>
@@ -251,16 +263,13 @@ const OrderProductManagementModal = ({
           <div className="row">
             <div className="col-md-8">
               <h6 className="mb-2">
-                <i className="bi bi-calendar me-2"></i>
                 Fecha: {formatDate(orderInfo.fecha)}
               </h6>
               <h6 className="mb-2">
-                <i className="bi bi-hash me-2"></i>
                 Venta ID: #{orderInfo.id || 'N/A'}
               </h6>
               {orderInfo.cliente && (
                 <h6 className="mb-2">
-                  <i className="bi bi-person me-2"></i>
                   Cliente: {orderInfo.cliente}
                 </h6>
               )}
@@ -283,7 +292,6 @@ const OrderProductManagementModal = ({
         {products.length > 0 ? (
           <div className="mb-4">
             <h6 className="mb-3">
-              <i className="bi bi-list-ul me-2"></i>
               Productos en la Venta
             </h6>
             <Table responsive className="mb-0">
@@ -390,7 +398,6 @@ const OrderProductManagementModal = ({
         {orderInfo.metodoPago && (
           <div className="mt-3 p-3 bg-info bg-opacity-10 rounded">
             <h6 className="mb-2">
-              <i className="bi bi-credit-card me-2"></i>
               Información de Pago
             </h6>
             <div className="row">
@@ -402,7 +409,7 @@ const OrderProductManagementModal = ({
               </div>
               {orderInfo.montoRecibido && (
                 <div className="col-md-6">
-                  <strong>Monto recibido:</strong> {formatCurrency(orderInfo.montoRecibido)}
+                  <span><strong>Monto recibido:</strong> {formatCurrency(orderInfo.montoRecibido)}</span>
                 </div>
               )}
             </div>
@@ -420,7 +427,7 @@ const OrderProductManagementModal = ({
         {/* Notas adicionales */}
         <div className="mt-4 p-3 bg-light rounded">
           <h6 className="mb-2">
-            <i className="bi bi-info-circle me-2"></i>
+            <FaInfoCircle className="me-2" />
             Resumen de la Venta
           </h6>
           <p className="mb-1">
@@ -435,24 +442,18 @@ const OrderProductManagementModal = ({
         </div>
       </Modal.Body>
 
-      <Modal.Footer className="d-flex justify-content-center align-items-center">
-        <Button variant="outline-secondary" size="sm" onClick={handleClose} disabled={loading} className="me-2 px-2 py-1">
-          <i className="bi bi-x-circle me-1"></i>
-          Cerrar
-        </Button>
-        
+      <Modal.Footer>
         {products.length > 0 && (
           <Button 
             variant="primary" 
             size="sm"
             disabled={loading}
             title="Generar factura"
-            className="px-2 py-1"
             onClick={() => {
               toast.info('Funcionalidad de generación de PDF próximamente disponible');
             }}
           >
-            <i className="bi bi-file-earmark-pdf me-1"></i>
+            <FaFilePdf className="me-1" />
             PDF
           </Button>
         )}

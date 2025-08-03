@@ -14,8 +14,29 @@ const usePOSCallbacks = ({
   
   // Callback optimizado para detección de productos
   const handleProductDetected = useCallback((product, detection) => {
+    console.log('handleProductDetected llamado con:', {
+      product,
+      detection,
+      productId: product?.id,
+      productName: product?.nombre || product?.name
+    });
+    
     try {
+      if (!product) {
+        console.error('Producto es null o undefined');
+        setError('Producto detectado no válido');
+        return;
+      }
+      
+      if (!product.id) {
+        console.error('Producto no tiene ID:', product);
+        setError('Error: producto detectado sin ID');
+        return;
+      }
+      
+      console.log('Llamando addToCart con producto:', product);
       addToCart(product);
+      
       console.log('Producto detectado y agregado al carrito:', {
         product: product.nombre || product.name,
         detection: detection.label,

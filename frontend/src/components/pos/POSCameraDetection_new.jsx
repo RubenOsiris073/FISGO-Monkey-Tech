@@ -74,88 +74,36 @@ const POSCameraDetection = ({ onProductDetected, products, loading, minimal = fa
 
   const optimizeImage = (imageData) => {
     console.log('Iniciando optimización de imagen...');
-    console.log('Tipo de imagen:', typeof imageData);
-    console.log('Primeros 50 caracteres:', imageData.substring(0, 50));
-    
     return new Promise((resolve, reject) => {
-      // Verificar que la imagen tenga el formato correcto
-      if (!imageData || typeof imageData !== 'string') {
-        console.error('Datos de imagen inválidos:', typeof imageData);
-        reject(new Error('Datos de imagen inválidos'));
-        return;
-      }
-
-      // Verificar que sea un data URL válido
-      if (!imageData.startsWith('data:image/')) {
-        console.error('No es un data URL válido:', imageData.substring(0, 30));
-        reject(new Error('Formato de imagen inválido'));
-        return;
-      }
-
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       const img = new Image();
       
-      // Timeout para la carga de imagen
-      const timeout = setTimeout(() => {
-        console.error('Timeout en carga de imagen');
-        reject(new Error('Timeout al cargar imagen'));
-      }, 5000);
-      
       img.onload = () => {
-        clearTimeout(timeout);
-        try {
-          console.log('Imagen cargada para optimización, dimensiones:', img.width, 'x', img.height);
-          canvas.width = 224;
-          canvas.height = 224;
-          ctx.drawImage(img, 0, 0, 224, 224);
-          const optimizedData = canvas.toDataURL('image/jpeg', 0.7);
-          console.log('Imagen optimizada completada, tamaño:', optimizedData.length);
-          resolve(optimizedData);
-        } catch (error) {
-          console.error('Error en canvas:', error);
-          reject(error);
-        }
+        console.log('Imagen cargada para optimización');
+        canvas.width = 224;
+        canvas.height = 224;
+        ctx.drawImage(img, 0, 0, 224, 224);
+        const optimizedData = canvas.toDataURL('image/jpeg', 0.7);
+        console.log('Imagen optimizada completada');
+        resolve(optimizedData);
       };
       
       img.onerror = (error) => {
-        clearTimeout(timeout);
         console.error('Error cargando imagen para optimización:', error);
-        console.error('Data URL problemático:', imageData.substring(0, 100));
-        
-        // Intentar enviar la imagen original sin optimizar
-        console.log('Intentando usar imagen original sin optimizar...');
-        resolve(imageData);
+        reject(error);
       };
       
-      try {
-        img.src = imageData;
-      } catch (error) {
-        clearTimeout(timeout);
-        console.error('Error estableciendo src de imagen:', error);
-        reject(error);
-      }
+      img.src = imageData;
     });
   };
 
   // Función de detección simplificada con logs detallados
   const performFastDetection = useCallback(async (isContinuous = false) => {
-    console.log('=== INICIO DETECCIÓN ===', { 
-      isContinuous, 
-      isWebcamActive, 
-      webcamRefExists: !!webcamRef.current,
-      webcamReadyState: webcamRef.current?.video?.readyState
-    });
+    console.log('=== INICIO DETECCIÓN ===', { isContinuous, isWebcamActive });
     
-    // Verificar que webcamRef esté disponible independientemente del estado
-    if (!webcamRef.current) {
-      console.log('Abortando: webcamRef no disponible');
-      return null;
-    }
-
-    // Verificar que la webcam esté realmente cargada
-    if (webcamRef.current.video && webcamRef.current.video.readyState < 2) {
-      console.log('Abortando: webcam no está lista (readyState:', webcamRef.current.video.readyState, ')');
+    if (!webcamRef.current || !isWebcamActive) {
+      console.log('Abortando: webcam no disponible');
       return null;
     }
 
@@ -174,70 +122,16 @@ const POSCameraDetection = ({ onProductDetected, products, loading, minimal = fa
 
       // 1. Capturar imagen
       console.log('1. Capturando imagen...');
-      console.log('Estado del video:', {
-        readyState: webcamRef.current.video?.readyState,
-        videoWidth: webcamRef.current.video?.videoWidth,
-        videoHeight: webcamRef.current.video?.videoHeight,
-        paused: webcamRef.current.video?.paused,
-        currentTime: webcamRef.current.video?.currentTime
-      });
-      
-      const rawImageData = webcamRef.current.getScreenshot({
-        width: 640,
-        height: 480,
-        screenshotFormat: 'image/jpeg',
-        screenshotQuality: 0.92
-      });
-      
-      if (!rawImageData || rawImageData === 'data:,') {
-        console.error('getScreenshot falló, intentando método alternativo...');
-        
-        // Método alternativo usando canvas directamente
-        const video = webcamRef.current.video;
-        if (video && video.readyState >= 2) {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          canvas.width = video.videoWidth || 640;
-          canvas.height = video.videoHeight || 480;
-          
-          try {
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const alternativeData = canvas.toDataURL('image/jpeg', 0.92);
-            console.log('✓ Imagen capturada con método alternativo');
-            console.log('✓ Formato:', alternativeData.substring(0, 30));
-            console.log('✓ Tamaño total:', alternativeData.length, 'caracteres');
-            
-            if (alternativeData && alternativeData !== 'data:,' && alternativeData.startsWith('data:image/')) {
-              rawImageData = alternativeData;
-            } else {
-              throw new Error('Método alternativo también falló');
-            }
-          } catch (canvasError) {
-            console.error('Error en método alternativo:', canvasError);
-            throw new Error('No se pudo capturar imagen con ningún método');
-          }
-        } else {
-          throw new Error('Video no está listo para captura');
-        }
+      const rawImageData = webcamRef.current.getScreenshot();
+      if (!rawImageData) {
+        throw new Error('No se pudo capturar imagen');
       }
-      
-      if (!rawImageData || !rawImageData.startsWith('data:image/')) {
-        throw new Error('Imagen capturada inválida');
-      }
-      
-      console.log('✓ Imagen capturada exitosamente, formato:', rawImageData.substring(0, 30));
-      console.log('✓ Tamaño total:', rawImageData.length, 'caracteres');
+      console.log('✓ Imagen capturada');
 
       // 2. Optimizar imagen
       console.log('2. Optimizando imagen...');
-      let optimizedImage;
-      try {
-        optimizedImage = await optimizeImage(rawImageData);
-        console.log('✓ Imagen optimizada exitosamente');
-      } catch (optimizeError) {
-        console.warn('⚠️ Error en optimización, usando imagen original:', optimizeError.message);
-        optimizedImage = rawImageData;
-      }
+      const optimizedImage = await optimizeImage(rawImageData);
+      console.log('✓ Imagen optimizada');
       
       // 3. Preparar petición
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -328,12 +222,7 @@ const POSCameraDetection = ({ onProductDetected, products, loading, minimal = fa
   const checkCameraPermissions = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          width: { ideal: 640 }, 
-          height: { ideal: 480 }, 
-          facingMode: 'environment',
-          frameRate: { ideal: 15, max: 30 }
-        } 
+        video: { width: 320, height: 240, facingMode: 'environment' } 
       });
       stream.getTracks().forEach(track => track.stop());
       return true;
@@ -357,11 +246,21 @@ const POSCameraDetection = ({ onProductDetected, products, loading, minimal = fa
       const hasPermissions = await checkCameraPermissions();
       if (!hasPermissions) return;
       
-      console.log('Permisos OK, activando webcam...');
       setIsWebcamActive(true);
-      toast.info('Activando cámara...');
+      toast.info('Cámara activada...');
       
-      // El modo continuo se iniciará automáticamente en handleWebcamReady
+      setTimeout(() => {
+        console.log('Iniciando modo continuo...');
+        setIsContinuousMode(true);
+        detectionIntervalRef.current = setInterval(async () => {
+          try {
+            await performFastDetection(true);
+          } catch (error) {
+            console.error('Error en ciclo:', error);
+          }
+        }, 1500);
+        toast.success('Detección continua iniciada');
+      }, 2000);
       
     } else {
       // Parar detección
@@ -377,26 +276,6 @@ const POSCameraDetection = ({ onProductDetected, products, loading, minimal = fa
       
       detectionCacheRef.current.clear();
       toast.info('Detección detenida');
-    }
-  }, [isWebcamActive, isContinuousMode]);
-
-  // Handler para cuando la webcam esté lista
-  const handleWebcamReady = useCallback(() => {
-    console.log('Webcam lista, video readyState:', webcamRef.current?.video?.readyState);
-    // Si estamos esperando para iniciar modo continuo, iniciarlo ahora
-    if (isWebcamActive && !isContinuousMode && !detectionIntervalRef.current) {
-      console.log('Auto-iniciando modo continuo porque webcam está lista');
-      setTimeout(() => {
-        setIsContinuousMode(true);
-        detectionIntervalRef.current = setInterval(async () => {
-          try {
-            await performFastDetection(true);
-          } catch (error) {
-            console.error('Error en ciclo:', error);
-          }
-        }, 1500);
-        toast.success('Detección continua iniciada automáticamente');
-      }, 500);
     }
   }, [isWebcamActive, isContinuousMode, performFastDetection]);
 
@@ -418,22 +297,10 @@ const POSCameraDetection = ({ onProductDetected, products, loading, minimal = fa
             ref={webcamRef}
             audio={false}
             screenshotFormat="image/jpeg"
-            screenshotQuality={0.92}
-            width={640}
-            height={480}
+            width={320}
+            height={240}
             style={{ display: 'none' }}
-            videoConstraints={{ 
-              width: { ideal: 640 }, 
-              height: { ideal: 480 }, 
-              facingMode: 'environment',
-              frameRate: { ideal: 15, max: 30 }
-            }}
-            onLoadedData={handleWebcamReady}
-            onUserMediaError={(error) => {
-              console.error('Error de webcam:', error);
-              setWebcamError(`Error de webcam: ${error.message}`);
-              setIsWebcamActive(false);
-            }}
+            videoConstraints={{ width: 320, height: 240, facingMode: 'environment' }}
           />
         )}
         

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Row, Col, Badge, Button } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
+import { FaSearch, FaTimes, FaExclamationCircle, FaRedoAlt } from 'react-icons/fa';
 
 // Hooks personalizados
 import useProductSync from './hooks/useProductSync';
@@ -62,13 +63,13 @@ const ProductGrid = ({ products = [], loading, onProductDeleted }) => {
     if (Object.keys(groupedProducts).length === 0) {
       return (
         <div className="text-center py-5">
-          <i className="bi bi-search display-1 text-muted"></i>
+          <FaSearch className="display-1 text-muted" />
           <h4 className="mt-3">No se encontraron productos</h4>
           <p className="text-muted">
             Intenta con otros términos de búsqueda o revisa los filtros aplicados
           </p>
           <Button variant="outline-primary" onClick={clearFilters}>
-            <i className="bi bi-arrow-clockwise me-1"></i>
+            <FaRedoAlt className="me-1" />
             Limpiar filtros
           </Button>
         </div>
@@ -108,7 +109,7 @@ const ProductGrid = ({ products = [], loading, onProductDeleted }) => {
         {/* Barra de búsqueda */}
         <div className="input-group mb-4">
           <span className="input-group-text">
-            <i className="bi bi-search"></i>
+            <FaSearch />
           </span>
           <input 
             type="text" 
@@ -119,7 +120,7 @@ const ProductGrid = ({ products = [], loading, onProductDeleted }) => {
           />
           {searchTerm && (
             <Button variant="outline-secondary" onClick={() => setSearchTerm('')}>
-              <i className="bi bi-x"></i>
+              <FaTimes />
             </Button>
           )}
         </div>
@@ -127,7 +128,7 @@ const ProductGrid = ({ products = [], loading, onProductDeleted }) => {
         {/* Grid de productos */}
         {categoriesToRender.length === 0 ? (
           <div className="text-center py-5">
-            <i className="bi bi-exclamation-circle display-4 text-warning"></i>
+            <FaExclamationCircle className="display-4 text-warning" />
             <h4 className="mt-3">No hay productos en esta categoría</h4>
             <Button variant="outline-primary" onClick={() => setActiveCategory('all')}>
               Ver todas las categorías

@@ -1,6 +1,18 @@
 import React from 'react';
 import { Card, Button } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
+import { 
+  FaTag, 
+  FaBox, 
+  FaDollarSign, 
+  FaBarcode, 
+  FaTachometerAlt, 
+  FaRuler, 
+  FaLayerGroup, 
+  FaInfoCircle, 
+  FaEdit,
+  FaEye
+} from 'react-icons/fa';
 
 const ProductCardModern = ({ product, onManage }) => {
   // Función para obtener la URL de la imagen o usar la imagen por defecto
@@ -34,20 +46,26 @@ const ProductCardModern = ({ product, onManage }) => {
           {product.marca && (
             <p className="product-card-brand mb-1">
               <small className="text-muted">
-                <i className="bi bi-tag me-1"></i>
+                <FaTag className="me-1" />
                 {product.marca}
               </small>
             </p>
           )}
           
           <p className="product-card-availability mb-1">
-            <i className="bi bi-box me-1"></i>
-            {product.cantidad || 0} disponible{(product.cantidad || 0) !== 1 ? 's' : ''}
+            <small>
+              <FaBox className="me-1" />
+              <strong>Stock:</strong> {product.cantidad || 0} disponible{(product.cantidad || 0) !== 1 ? 's' : ''}
+            </small>
           </p>
-          <h4 className="product-card-price mb-2">
-            <i className="bi bi-currency-dollar me-1"></i>
-            ${parseFloat(product.precio || 0).toFixed(2)}
-          </h4>
+          
+          {/* Precio como atributo más */}
+          <p className="product-card-attribute mb-1">
+            <small>
+              <FaDollarSign className="me-1" />
+              <strong>{parseFloat(product.precio || 0).toFixed(2)}</strong>
+            </small>
+          </p>
         </div>
         
         {/* Información adicional */}
@@ -56,7 +74,7 @@ const ProductCardModern = ({ product, onManage }) => {
           {product.codigo && (
             <p className="product-card-code mb-1">
               <small>
-                <i className="bi bi-upc-scan me-1"></i>
+                <FaBarcode className="me-1" />
                 <strong>Código:</strong> {product.codigo}
               </small>
             </p>
@@ -66,7 +84,7 @@ const ProductCardModern = ({ product, onManage }) => {
           {(product.peso || product.volumen) && (
             <p className="product-card-weight mb-1">
               <small>
-                <i className="bi bi-speedometer2 me-1"></i>
+                <FaTachometerAlt className="me-1" />
                 <strong>
                   {product.peso ? 'Peso:' : 'Volumen:'}
                 </strong> {product.peso || product.volumen}
@@ -78,7 +96,7 @@ const ProductCardModern = ({ product, onManage }) => {
           {product.unidadMedida && (
             <p className="product-card-unit mb-1">
               <small>
-                <i className="bi bi-rulers me-1"></i>
+                <FaRuler className="me-1" />
                 <strong>Unidad:</strong> {product.unidadMedida}
               </small>
             </p>
@@ -88,7 +106,7 @@ const ProductCardModern = ({ product, onManage }) => {
           {product.categoria && (
             <p className="product-card-category mb-1">
               <small>
-                <i className="bi bi-collection me-1"></i>
+                <FaLayerGroup className="me-1" />
                 <strong>Categoría:</strong> {product.categoria}
               </small>
             </p>
@@ -97,7 +115,7 @@ const ProductCardModern = ({ product, onManage }) => {
           {/* Descripción corta si existe */}
           {product.descripcion && (
             <p className="product-card-description small text-muted mb-0">
-              <i className="bi bi-info-circle me-1"></i>
+              <FaInfoCircle className="me-1" />
               {product.descripcion.length > 60 
                 ? `${product.descripcion.substring(0, 60)}...` 
                 : product.descripcion}
@@ -114,7 +132,7 @@ const ProductCardModern = ({ product, onManage }) => {
                 variant="primary"
                 size="sm"
               >
-                <i className="bi bi-pencil-square me-1"></i>
+                <FaEdit className="me-1" />
                 {product.nombre ? 'Editar' : 'Completar'}
               </Button>
             </Link>
@@ -125,7 +143,7 @@ const ProductCardModern = ({ product, onManage }) => {
               size="sm"
               onClick={() => onManage(product)}
             >
-              <i className="bi bi-eye-fill me-1"></i>
+              <FaEye className="me-1" />
               Gestionar
             </Button>
           </div>

@@ -83,9 +83,31 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       
       const result = await firebaseAuthService.signInWithGoogle();
+      console.log('Google login exitoso en AuthContext:', result.user.email);
       return result;
     } catch (error) {
-      setError(error.message);
+      console.error('Error en signInWithGoogle en AuthContext:', error);
+      
+      // Manejo específico de errores comunes
+      let errorMessage = 'Error al iniciar sesión con Google';
+      
+      if (error.message === 'Login cancelado por el usuario') {
+        errorMessage = 'Login cancelado';
+      } else if (error.message === 'Popup bloqueado por el navegador. Permite popups para este sitio.') {
+        errorMessage = 'Por favor permite popups para este sitio';
+      } else if (error.message === 'Dominio no autorizado para Google Auth') {
+        errorMessage = 'Dominio no autorizado. Contacta al administrador.';
+      } else if (error.message === 'Error interno de autenticación. Verifica la configuración de Firebase.') {
+        errorMessage = 'Error de configuración. Contacta al administrador.';
+      } else if (error.message === 'Google Auth no está habilitado en Firebase.') {
+        errorMessage = 'Google Auth no está configurado correctamente.';
+      } else if (error.message === 'Otra ventana de login está abierta.') {
+        errorMessage = 'Ya hay una ventana de login abierta. Ciérrala e intenta de nuevo.';
+      } else if (error.code) {
+        errorMessage = `Error de autenticación (${error.code})`;
+      }
+      
+      setError(errorMessage);
       throw error;
     } finally {
       setLoading(false);

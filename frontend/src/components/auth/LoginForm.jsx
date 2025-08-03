@@ -83,6 +83,7 @@ const LoginForm = ({ accessType = 'general', onBack, onLoginSuccess }) => {
   const handleGoogleLogin = async () => {
     try {
       setIsSubmitting(true);
+      clearError(); // Clear any previous errors
       await signInWithGoogle();
       
       setTimeout(() => {
@@ -99,17 +100,7 @@ const LoginForm = ({ accessType = 'general', onBack, onLoginSuccess }) => {
       // Manejo específico para error de dominio no autorizado
       if (error.code === 'auth/unauthorized-domain') {
         const currentDomain = getCurrentDomain();
-        setError(`El dominio actual (${currentDomain}) no está autorizado para login con Google. 
-
-Para solucionarlo:
-1. Ve a la consola de Firebase (https://console.firebase.google.com)
-2. Selecciona tu proyecto: productos-75280
-3. Ve a Authentication > Settings > Authorized domains
-4. Agrega este dominio: ${currentDomain}
-
-Mientras tanto, usa el login con email y password.`);
-      } else {
-        setError(error.message || 'Error al iniciar sesión con Google');
+        console.error(`El dominio actual (${currentDomain}) no está autorizado para login con Google.`);
       }
     } finally {
       setIsSubmitting(false);

@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, doc, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { getAuth as getFirebaseAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut, onAuthStateChanged, createUserWithEmailAndPassword } from 'firebase/auth';
+import { getAuth as getFirebaseAuth, signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut as firebaseSignOut, onAuthStateChanged, createUserWithEmailAndPassword } from 'firebase/auth';
 
 // Colecciones de Firebase
 export const COLLECTIONS = {
@@ -61,6 +61,7 @@ export const initializeFirebase = async () => {
     });
     
     console.log('Inicializando Firebase con proyecto:', firebaseConfig.projectId);
+    console.log('AuthDomain configurado:', firebaseConfig.authDomain);
 
     // Validar que todas las configuraciones necesarias estén presentes
     if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
@@ -72,6 +73,8 @@ export const initializeFirebase = async () => {
     auth = getFirebaseAuth(firebaseApp);
     
     console.log('Firebase inicializado correctamente');
+    console.log('Auth instance creada:', !!auth);
+    
     return firebaseApp;
   } catch (error) {
     console.error("Error al inicializar Firebase:", error);
@@ -96,8 +99,38 @@ export const authService = {
     if (!authInstance) {
       throw new Error('Firebase Auth no está inicializado');
     }
+    
     const provider = new GoogleAuthProvider();
-    return await signInWithPopup(authInstance, provider);
+    // Configurar el provider para forzar la selección de cuenta
+    provider.setCustomParameters({
+      prompt: 'select_account'
+    });
+    
+    try {
+      console.log('Iniciando Google login con popup...');
+      const result = await signInWithPopup(authInstance, provider);
+      console.log('Google login exitoso:', result.user.email);
+      return result;
+    } catch (error) {
+      console.error('Error en signInWithGoogle:', error);
+      
+      // Manejo específico de errores de Google Auth
+      if (error.code === 'auth/popup-closed-by-user') {
+        throw new Error('Login cancelado por el usuario');
+      } else if (error.code === 'auth/popup-blocked') {
+        throw new Error('Popup bloqueado por el navegador. Permite popups para este sitio.');
+      } else if (error.code === 'auth/unauthorized-domain') {
+        throw new Error('Dominio no autorizado para Google Auth');
+      } else if (error.code === 'auth/internal-error') {
+        throw new Error('Error interno de autenticación. Verifica la configuración de Firebase.');
+      } else if (error.code === 'auth/operation-not-allowed') {
+        throw new Error('Google Auth no está habilitado en Firebase.');
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        throw new Error('Otra ventana de login está abierta.');
+      }
+      
+      throw error;
+    }
   },
 
   // Registro con email y password
@@ -131,6 +164,15 @@ export const authService = {
   getCurrentUser: () => {
     const authInstance = getAuth();
     return authInstance ? authInstance.currentUser : null;
+  },
+
+  // Obtener resultado de redirect
+  getRedirectResult: async () => {
+    const authInstance = getAuth();
+    if (!authInstance) {
+      throw new Error('Firebase Auth no está inicializado');
+    }
+    return await getRedirectResult(authInstance);
   }
 };
 

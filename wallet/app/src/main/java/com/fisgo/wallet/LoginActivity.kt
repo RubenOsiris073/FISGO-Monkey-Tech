@@ -32,44 +32,55 @@ class LoginActivity : AppCompatActivity() {
         Log.d(TAG, "RESULT_OK = $RESULT_OK")
         Log.d(TAG, "RESULT_CANCELED = $RESULT_CANCELED")
         Log.d(TAG, "Intent data: ${result.data}")
+        Log.d(TAG, "Intent has extras: ${result.data?.extras != null}")
         
         binding.progressBar.visibility = View.GONE
         
+        // Intentar procesar los datos independientemente del código de resultado
+        // si hay un intent con datos
+        if (result.data != null) {
+            Log.d(TAG, "Intent tiene datos, intentando procesar...")
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            try {
+                val account = task.getResult(ApiException::class.java)!!
+                Log.d(TAG, "✅ Google sign in success: ${account.email}")
+                Log.d(TAG, "Account ID: ${account.id}")
+                Log.d(TAG, "Display Name: ${account.displayName}")
+                Log.d(TAG, "ID Token available: ${account.idToken != null}")
+                Log.d(TAG, "ID Token length: ${account.idToken?.length ?: 0}")
+                
+                if (account.idToken != null) {
+                    firebaseAuthWithGoogle(account.idToken!!)
+                } else {
+                    Log.e(TAG, "ID Token is null - posible problema de configuración")
+                    Toast.makeText(this, "Error: Token de autenticación nulo. Verifique la configuración de Firebase.", 
+                        Toast.LENGTH_LONG).show()
+                }
+                return@registerForActivityResult
+            } catch (e: ApiException) {
+                Log.w(TAG, "Error procesando datos de Google Sign In: ${e.statusCode}", e)
+                Log.w(TAG, "Error details: ${e.localizedMessage}")
+                val errorMsg = when (e.statusCode) {
+                    12501 -> "Operación cancelada por el usuario"
+                    12502 -> "Error de red - verifique su conexión"
+                    12500 -> "Error interno de Google Services"
+                    7 -> "Error de red - sin conexión"
+                    10 -> "Error de desarrollo - configuración incorrecta"
+                    else -> "Error ${e.statusCode}: ${e.localizedMessage}"
+                }
+                Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show()
+                return@registerForActivityResult
+            }
+        }
+        
+        // Si llegamos aquí, procesar según el código de resultado normal
         when (result.resultCode) {
             RESULT_OK -> {
-                Log.d(TAG, "Resultado OK - procesando datos...")
-                val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-                try {
-                    val account = task.getResult(ApiException::class.java)!!
-                    Log.d(TAG, "Google sign in success: ${account.email}")
-                    Log.d(TAG, "Account ID: ${account.id}")
-                    Log.d(TAG, "Display Name: ${account.displayName}")
-                    Log.d(TAG, "ID Token available: ${account.idToken != null}")
-                    Log.d(TAG, "ID Token length: ${account.idToken?.length ?: 0}")
-                    
-                    if (account.idToken != null) {
-                        firebaseAuthWithGoogle(account.idToken!!)
-                    } else {
-                        Log.e(TAG, "ID Token is null - posible problema de configuración")
-                        Toast.makeText(this, "Error: Token de autenticación nulo. Verifique la configuración de Firebase.", 
-                            Toast.LENGTH_LONG).show()
-                    }
-                } catch (e: ApiException) {
-                    Log.w(TAG, "Google sign in failed with status code: ${e.statusCode}", e)
-                    Log.w(TAG, "Error details: ${e.localizedMessage}")
-                    val errorMsg = when (e.statusCode) {
-                        12501 -> "Operación cancelada por el usuario"
-                        12502 -> "Error de red - verifique su conexión"
-                        12500 -> "Error interno de Google Services"
-                        7 -> "Error de red - sin conexión"
-                        10 -> "Error de desarrollo - configuración incorrecta"
-                        else -> "Error ${e.statusCode}: ${e.localizedMessage}"
-                    }
-                    Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show()
-                }
+                Log.d(TAG, "Resultado OK pero sin datos procesables")
+                Toast.makeText(this, "Error: Datos de autenticación no válidos", Toast.LENGTH_LONG).show()
             }
             RESULT_CANCELED -> {
-                Log.w(TAG, "Google sign in cancelled by user - código -1")
+                Log.w(TAG, "Google sign in cancelled by user")
                 Toast.makeText(this, "Inicio de sesión cancelado por el usuario", Toast.LENGTH_SHORT).show()
             }
             else -> {

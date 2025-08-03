@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Button, Alert } from 'react-bootstrap';
+import { Card, Button, Alert } from 'react-bootstrap';
 import { FaCamera, FaBoxOpen, FaPlus } from 'react-icons/fa';
 import '../styles/pages/productRegistration.css';
 import CameraDetectionComponent from '../components/products/CameraDetectionComponent';
@@ -194,11 +194,9 @@ const ProductRegistrationPage = () => {
         </div>
       </div>
 
-      <Container fluid className="py-4">
-        <Row className="justify-content-center">
-          <Col lg={10}>
-            <div className="product-registration-content"
-                 style={{ marginTop: '1rem' }}>
+      <div className="px-4 pb-4">
+        <div className="product-registration-content"
+             style={{ marginTop: '1rem' }}>
               {error && (
                 <Alert variant="danger" dismissible onClose={() => setError(null)}>
                   {error}
@@ -215,8 +213,8 @@ const ProductRegistrationPage = () => {
               {currentStep === 'selection' && (
                 <div className="selection-cards-container">
                   <h3 className="selection-title">Seleccione el método de registro</h3>
-                  <Row className="justify-content-center">
-                    <Col md={6}>
+                  <div className="method-cards-row">
+                    <div className="method-card-wrapper">
                       <div className="method-card primary" onClick={() => setCurrentStep('camera')}>
                         <FaCamera className="method-icon primary" />
                         <h4 className="method-title">Registro con Cámara</h4>
@@ -231,8 +229,8 @@ const ProductRegistrationPage = () => {
                           Activar Cámara
                         </Button>
                       </div>
-                    </Col>
-                    <Col md={6}>
+                    </div>
+                    <div className="method-card-wrapper">
                       <div className="method-card secondary" onClick={() => setCurrentStep('product-registration')}>
                         <FaPlus className="method-icon secondary" />
                         <h4 className="method-title">Registro Manual</h4>
@@ -247,8 +245,8 @@ const ProductRegistrationPage = () => {
                           Registro Manual
                         </Button>
                       </div>
-                    </Col>
-                  </Row>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -313,9 +311,7 @@ const ProductRegistrationPage = () => {
                 </div>
               )}
             </div>
-          </Col>
-        </Row>
-      </Container>
+      </div>
     </div>
   );
 };

@@ -389,7 +389,6 @@ class CardPaymentActivity : AppCompatActivity() {
             binding.cardInputContainer.addView(instructionText)
         }
     }
-    }
     
     private fun createPaymentIntent() {
         lifecycleScope.launch {

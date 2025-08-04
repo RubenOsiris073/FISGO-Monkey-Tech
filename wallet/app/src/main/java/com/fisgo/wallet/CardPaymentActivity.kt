@@ -336,7 +336,7 @@ class CardPaymentActivity : AppCompatActivity() {
         // Crear un TextView para mostrar información de la tarjeta guardada
         val savedCardText = android.widget.TextView(this)
         savedCardText.tag = "saved_card_message"
-        savedCardText.text = "💳 Usando tarjeta guardada: $cardType •••• $lastFour"
+        savedCardText.text = "Usando tarjeta guardada: $cardType •••• $lastFour"
         savedCardText.textSize = 16f
         savedCardText.setTextColor(android.graphics.Color.parseColor("#FFFFFF"))
         savedCardText.setPadding(20, 16, 20, 16)
@@ -437,8 +437,8 @@ class CardPaymentActivity : AppCompatActivity() {
                     PaymentIntentResponse(
                         success = true,
                         data = PaymentIntentData(
-                            clientSecret = response.data.getString("client_secret"),
-                            paymentIntentId = response.data.getString("id")
+                            clientSecret = response.data.optString("clientSecret", ""),
+                            paymentIntentId = response.data.optString("paymentIntentId", "")
                         )
                     )
                 } else {
@@ -448,6 +448,7 @@ class CardPaymentActivity : AppCompatActivity() {
                     )
                 }
             } catch (e: Exception) {
+                Log.e(TAG, "Exception in createPaymentIntentRequest: ${e.message}")
                 PaymentIntentResponse(
                     success = false, 
                     error = "Error de conexión: ${e.message}"

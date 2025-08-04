@@ -338,12 +338,9 @@ class CardPaymentActivity : AppCompatActivity() {
         savedCardText.tag = "saved_card_message"
         savedCardText.text = "Usando tarjeta guardada: $cardType •••• $lastFour"
         savedCardText.textSize = 16f
-        savedCardText.setTextColor(android.graphics.Color.parseColor("#FFFFFF"))
+        savedCardText.setTextColor(android.graphics.Color.parseColor("#333333"))
         savedCardText.setPadding(20, 16, 20, 16)
-        savedCardText.background = android.graphics.drawable.GradientDrawable().apply {
-            setColor(android.graphics.Color.parseColor("#4CAF50"))
-            cornerRadius = 12f
-        }
+        savedCardText.background = null
         savedCardText.gravity = android.view.Gravity.CENTER
         
         // Crear layoutParams con márgenes

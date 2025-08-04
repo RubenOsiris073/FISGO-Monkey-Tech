@@ -402,20 +402,31 @@ class SyncCodeActivity : AppCompatActivity() {
                 
                 if (response.success && response.data != null) {
                     val data = response.data
+                    Log.d("SyncCart", "Respuesta completa del backend: ${data.toString()}")
+                    
                     val itemsArray = data.getJSONArray("items")
                     val items = mutableListOf<CartItem>()
                     
                     for (i in 0 until itemsArray.length()) {
                         val item = itemsArray.getJSONObject(i)
+                        Log.d("SyncCart", "Item $i: ${item.toString()}")
+                        
+                        val precio = item.optDouble("precio", 0.0)
+                        val quantity = item.optInt("quantity", 1)
+                        
+                        Log.d("SyncCart", "Item $i - precio: $precio, quantity: $quantity")
+                        
                         items.add(
                             CartItem(
-                                id = item.getString("id"),
-                                nombre = item.getString("nombre"),
-                                precio = item.getDouble("precio"),
-                                quantity = item.getInt("quantity")
+                                id = item.optString("id", ""),
+                                nombre = item.optString("nombre", "Producto"),
+                                precio = precio,
+                                quantity = quantity
                             )
                         )
                     }
+                    
+                    Log.d("SyncCart", "Items procesados: ${items.size}")
                     
                     SyncResult(
                         success = true,
@@ -430,6 +441,7 @@ class SyncCodeActivity : AppCompatActivity() {
                     )
                 }
             } catch (e: Exception) {
+                Log.e("SyncCart", "Exception en sincronización: ${e.message}", e)
                 SyncResult(
                     success = false,
                     error = "Error de conexión: ${e.message}"
@@ -469,6 +481,12 @@ class SyncCodeActivity : AppCompatActivity() {
     
     private fun showCartItems() {
         cartContainer.visibility = View.VISIBLE
+        
+        Log.d("SyncCart", "Mostrando ${cartItems.size} items en el carrito")
+        for (i in cartItems.indices) {
+            val item = cartItems[i]
+            Log.d("SyncCart", "Item $i: $item")
+        }
         
         val adapter = CartAdapter(cartItems)
         cartRecyclerView.adapter = adapter

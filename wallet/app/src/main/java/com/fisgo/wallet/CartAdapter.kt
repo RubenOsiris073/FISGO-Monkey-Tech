@@ -22,9 +22,15 @@ class CartAdapter(private val cartItems: List<CartItem>) : RecyclerView.Adapter<
     
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = cartItems[position]
+        android.util.Log.d("CartAdapter", "Binding item $position: $item")
+        
         holder.productName.text = item.nombre
         holder.productQuantity.text = "x${item.quantity}"
-        holder.productPrice.text = "$${String.format("%.2f", item.precio * item.quantity)}"
+        
+        val totalPrice = item.precio * item.quantity
+        android.util.Log.d("CartAdapter", "Item $position - precio: ${item.precio}, quantity: ${item.quantity}, total: $totalPrice")
+        
+        holder.productPrice.text = "$${String.format("%.2f", totalPrice)}"
     }
     
     override fun getItemCount() = cartItems.size

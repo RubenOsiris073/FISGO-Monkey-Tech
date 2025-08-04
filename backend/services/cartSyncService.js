@@ -1,4 +1,24 @@
-// cartSyncService.js - Servicio para sincronización entre POS web y aplicación móvil
+// cartSyncService.js - Servicio para sincronización entre POS web // Obtener carrito por sessionId o shortCode
+const getSyncedCart = (identifier) => {
+  console.log('getSyncedCart - identifier:', identifier);
+  
+  // Primero intentar usar el identificador como sessionId
+  if (syncedCarts.has(identifier)) {
+    const cart = syncedCarts.get(identifier);
+    console.log('getSyncedCart - carrito encontrado por sessionId:', JSON.stringify(cart, null, 2));
+    return cart;
+  }
+  
+  // Luego intentar usar el identificador como código corto
+  const sessionId = shortCodeToSessionId.get(identifier.toUpperCase());
+  if (sessionId && syncedCarts.has(sessionId)) {
+    const cart = syncedCarts.get(sessionId);
+    console.log('getSyncedCart - carrito encontrado por shortCode:', JSON.stringify(cart, null, 2));
+    return cart;
+  }
+  
+  console.log('getSyncedCart - carrito no encontrado');
+  return null;óvil
 const crypto = require('crypto');
 const cartService = require('./cartService');
 const salesService = require('./salesService');
@@ -25,6 +45,8 @@ const generateShortCode = () => {
 
 // Crear una nueva sesión de sincronización
 const createSyncSession = (cart) => {
+  console.log('createSyncSession - cart recibido:', JSON.stringify(cart, null, 2));
+  
   const sessionId = crypto.randomUUID();
   const shortCode = generateShortCode();
   
@@ -38,6 +60,8 @@ const createSyncSession = (cart) => {
     updated: new Date().toISOString(),
     expiresAt: new Date(Date.now() + 30 * 60 * 1000) // Expira en 30 minutos
   };
+  
+  console.log('createSyncSession - syncData creado:', JSON.stringify(syncData, null, 2));
   
   syncedCarts.set(sessionId, syncData);
   shortCodeToSessionId.set(shortCode, sessionId);

@@ -158,14 +158,24 @@ router.post('/sync/:code', async (req, res) => {
     const { code } = req.params;
     const { userId } = req.body;
     
+    Logger.info(`Solicitando sincronización con código: ${code}`);
+    
     const syncedCart = cartSyncService.getSyncedCart(code);
     
     if (!syncedCart) {
+      Logger.warn(`Código de sincronización no válido: ${code}`);
       return res.status(404).json({
         success: false,
         error: 'Código de sincronización no válido o expirado'
       });
     }
+    
+    Logger.info(`Carrito encontrado para código ${code}:`, {
+      sessionId: syncedCart.sessionId,
+      total: syncedCart.total,
+      itemsCount: syncedCart.items?.length || 0,
+      items: syncedCart.items
+    });
     
     res.status(200).json({
       success: true,

@@ -6,7 +6,11 @@ data class CartItem(
     val nombre: String,
     val precio: Double,
     val quantity: Int
-)
+) {
+    override fun toString(): String {
+        return "CartItem(id='$id', nombre='$nombre', precio=$precio, quantity=$quantity)"
+    }
+}
 
 data class SyncResult(
     val success: Boolean,

@@ -467,28 +467,38 @@ class SyncCodeActivity : AppCompatActivity() {
                     SyncResult(
                         success = false,
                         error = response.error ?: "Error desconocido al sincronizar"
-                    )
-                }
-            } catch (e: Exception) {
-                SyncResult(
-                    success = false,
-                    error = "Error de conexión: ${e.message}"
-                )
-            }
-        }
-    }
+    private suspend fun syncCartWithBackend(code: String): SyncResult {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = ApiService.syncCart(code)
+                
+                if (response.success && response.data != null) {
+                    val data = response.data
+                    val itemsArray = data.getJSONArray("items")
+                    val items = mutableListOf<CartItem>()
+                    
+                    for (i in 0 until itemsArray.length()) {
+                        val item = itemsArray.getJSONObject(i)
+                        items.add(
+                            CartItem(
+                                id = item.getString("id"),
+                                nombre = item.getString("nombre"),
+                                precio = item.getDouble("precio"),
+                                quantity = item.getInt("quantity")
+                            )
+                        )
                     }
                     
                     SyncResult(
                         success = true,
+                        sessionId = data.getString("sessionId"),
                         items = items,
-                        total = data.getDouble("total"),
-                        sessionId = data.getString("sessionId")
+                        total = data.getDouble("total")
                     )
                 } else {
                     SyncResult(
                         success = false,
-                        error = jsonResponse.getString("error")
+                        error = response.error ?: "Error desconocido al sincronizar"
                     )
                 }
             } catch (e: Exception) {
@@ -499,7 +509,7 @@ class SyncCodeActivity : AppCompatActivity() {
             }
         }
     }
-    
+
     private suspend fun processPaymentWithBackend(paymentMethod: String): PaymentResult {
         return withContext(Dispatchers.IO) {
             try {
@@ -518,16 +528,6 @@ class SyncCodeActivity : AppCompatActivity() {
                     PaymentResult(
                         success = false,
                         error = response.error ?: "Error procesando el pago"
-                    )
-                }
-            } catch (e: Exception) {
-                PaymentResult(
-                    success = false,
-                    error = "Error de conexión: ${e.message}"
-                )
-            }
-        }
-    }
                     )
                 }
             } catch (e: Exception) {

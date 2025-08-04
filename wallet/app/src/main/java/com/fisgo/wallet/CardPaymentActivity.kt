@@ -348,8 +348,10 @@ class CardPaymentActivity : AppCompatActivity() {
                 if (response.success && response.data != null) {
                     PaymentIntentResponse(
                         success = true,
-                        client_secret = response.data.getString("client_secret"),
-                        paymentIntentId = response.data.getString("id")
+                        data = PaymentIntentData(
+                            clientSecret = response.data.getString("client_secret"),
+                            paymentIntentId = response.data.getString("id")
+                        )
                     )
                 } else {
                     PaymentIntentResponse(

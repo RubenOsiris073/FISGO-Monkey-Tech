@@ -6,8 +6,8 @@ const { DoubleEncryptionManager } = require('./backend/scripts/doubleEncryption'
 const encryptedFilePath = path.join(__dirname, 'backend/config/google-credentials.double-encrypted.json');
 const doubleEncryptedData = JSON.parse(fs.readFileSync(encryptedFilePath, 'utf8'));
 
-// Usar la clave maestra del .env
-const masterPassword = 'fisgo-monkey-tech-master-key-2025'; // Desde el .env del backend
+// Usar la clave maestra desde la variable de entorno
+const masterPassword = process.env.MASTER_ENCRYPTION_KEY;
 
 const doubleEncryption = new DoubleEncryptionManager();
 

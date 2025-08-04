@@ -64,6 +64,14 @@ O en tu archivo `.env`:
 ENCRYPTION_PASSWORD=tu-contraseña-super-segura
 ```
 
+### Clave maestra para doble encriptación
+Algunos scripts como `check-credentials.js` y los ubicados en `backend/scripts/` utilizan una segunda clave llamada `MASTER_ENCRYPTION_KEY`.
+Esta variable **debe** configurarse en el entorno y no tiene valor por defecto.
+
+```bash
+export MASTER_ENCRYPTION_KEY="tu-clave-maestra"
+```
+
 ## 🛠️ Scripts disponibles
 
 ### Encriptar credenciales (ya ejecutado)

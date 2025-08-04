@@ -145,8 +145,8 @@ async function createDoubleEncryptedCredentials(credentialType = 'google') {
     throw new Error(`Tipo de credencial no válido: ${credentialType}`);
   }
   
-  // Clave maestra (se debe configurar en .env)
-  const masterPassword = process.env.MASTER_ENCRYPTION_KEY || 'fisgo-monkey-tech-master-key-2025';
+  // Clave maestra (obligatoria en variable de entorno)
+  const masterPassword = process.env.MASTER_ENCRYPTION_KEY;
   
   try {
     // Leer credenciales originales

@@ -1,24 +1,4 @@
 // cartSyncService.js - Servicio para sincronización entre POS web // Obtener carrito por sessionId o shortCode
-const getSyncedCart = (identifier) => {
-  console.log('getSyncedCart - identifier:', identifier);
-  
-  // Primero intentar usar el identificador como sessionId
-  if (syncedCarts.has(identifier)) {
-    const cart = syncedCarts.get(identifier);
-    console.log('getSyncedCart - carrito encontrado por sessionId:', JSON.stringify(cart, null, 2));
-    return cart;
-  }
-  
-  // Luego intentar usar el identificador como código corto
-  const sessionId = shortCodeToSessionId.get(identifier.toUpperCase());
-  if (sessionId && syncedCarts.has(sessionId)) {
-    const cart = syncedCarts.get(sessionId);
-    console.log('getSyncedCart - carrito encontrado por shortCode:', JSON.stringify(cart, null, 2));
-    return cart;
-  }
-  
-  console.log('getSyncedCart - carrito no encontrado');
-  return null;óvil
 const crypto = require('crypto');
 const cartService = require('./cartService');
 const salesService = require('./salesService');

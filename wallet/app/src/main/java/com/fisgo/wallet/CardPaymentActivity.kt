@@ -140,19 +140,26 @@ class CardPaymentActivity : AppCompatActivity() {
         // Limpiar mensajes antiguos si existen
         clearDuplicateMessages()
         
-        // En modo setup, siempre mostrar el input de tarjeta nueva
-        // En modo pago, verificar si hay tarjeta guardada
-        if (!isSetupMode && PaymentMethodManager.hasSavedCard(this)) {
-            val cardType = PaymentMethodManager.getSavedCardType(this)
-            val lastFour = PaymentMethodManager.getSavedCardLastFour(this)
-            
-            // Mostrar información de la tarjeta guardada en lugar del input
-            showSavedCardInfo(cardType, lastFour)
-            return // No crear campos si hay tarjeta guardada y no estamos en modo setup
+        if (isSetupMode) {
+            // MODO SETUP: Siempre mostrar campos para nueva tarjeta
+            Log.d(TAG, "Modo setup: Mostrando campos para nueva tarjeta")
+            setupCardFieldValidation()
+        } else {
+            // MODO PAGO: Verificar si hay tarjeta guardada
+            if (PaymentMethodManager.hasSavedCard(this)) {
+                val cardType = PaymentMethodManager.getSavedCardType(this)
+                val lastFour = PaymentMethodManager.getSavedCardLastFour(this)
+                
+                Log.d(TAG, "Modo pago: Usando tarjeta guardada $cardType **** $lastFour")
+                // Mostrar información de la tarjeta guardada y habilitar pago
+                showSavedCardInfo(cardType, lastFour)
+                return
+            } else {
+                Log.d(TAG, "Modo pago: No hay tarjeta guardada, mostrando campos")
+                // No hay tarjeta guardada, mostrar campos para nueva tarjeta
+                setupCardFieldValidation()
+            }
         }
-        
-        // Configurar validación en tiempo real para los campos personalizados
-        setupCardFieldValidation()
     }
     
     private fun setupCardFieldValidation() {
@@ -293,99 +300,95 @@ class CardPaymentActivity : AppCompatActivity() {
     
     private fun showSavedCardInfo(cardType: String?, lastFour: String?) {
         if (cardType != null && lastFour != null) {
-            // Verificar si ya se mostró la información para evitar duplicados
-            if (binding.cardInputContainer.childCount > 1) {
-                return // Ya se agregaron elementos adicionales, no duplicar
-            }
+            Log.d(TAG, "Mostrando tarjeta guardada: $cardType **** $lastFour")
             
-            // Mostrar información de la tarjeta guardada en la UI
-            Log.d(TAG, "Tarjeta guardada encontrada: $cardType **** $lastFour")
+            // Ocultar los campos de entrada ya que usaremos la tarjeta guardada
+            binding.cardNumberEditText.visibility = android.view.View.GONE
+            binding.expiryDateEditText.visibility = android.view.View.GONE
+            binding.cvvEditText.visibility = android.view.View.GONE
             
             // Actualizar logos para mostrar el tipo de tarjeta guardada
-            when (cardType.lowercase()) {
-                "visa" -> {
-                    binding.visaLogoImageView.alpha = 1.0f
-                    binding.mastercardLogoImageView.alpha = 0.4f
-                    binding.amexLogoImageView.alpha = 0.4f
-                }
-                "mastercard" -> {
-                    binding.visaLogoImageView.alpha = 0.4f
-                    binding.mastercardLogoImageView.alpha = 1.0f
-                    binding.amexLogoImageView.alpha = 0.4f
-                }
-                "american express", "amex" -> {
-                    binding.visaLogoImageView.alpha = 0.4f
-                    binding.mastercardLogoImageView.alpha = 0.4f
-                    binding.amexLogoImageView.alpha = 1.0f
-                }
-            }
+            updateCardLogos(cardType.lowercase())
             
-            // Mostrar mensaje indicando que hay una tarjeta guardada
+            // Mostrar mensaje de tarjeta guardada
             showSavedCardMessage(cardType, lastFour)
+            
+            // En modo pago, habilitar botón si tenemos clientSecret
+            if (!isSetupMode && clientSecret != null) {
+                binding.payButton.isEnabled = true
+                Log.d(TAG, "Botón de pago habilitado con tarjeta guardada")
+            }
         }
     }
     
     private fun showSavedCardMessage(cardType: String, lastFour: String) {
-        // Verificar si ya existe el mensaje para evitar duplicados - verificación más robusta
+        // Verificar si ya existe el mensaje para evitar duplicados
         for (i in 0 until binding.cardInputContainer.childCount) {
             val child = binding.cardInputContainer.getChildAt(i)
-            if (child.tag == "saved_card_message" || child.tag == "instruction_message") {
+            if (child.tag == "saved_card_message") {
                 Log.d(TAG, "Mensaje de tarjeta guardada ya existe, no duplicar")
-                return // Ya existe el mensaje, no agregar otro
+                return
             }
         }
         
-        Log.d(TAG, "Agregando mensaje de tarjeta guardada por primera vez")
+        Log.d(TAG, "Agregando mensaje de tarjeta guardada")
         
         // Crear un TextView para mostrar información de la tarjeta guardada
         val savedCardText = android.widget.TextView(this)
-        savedCardText.tag = "saved_card_message" // Tag para identificarlo
-        savedCardText.text = "💳 Tarjeta guardada: $cardType •••• $lastFour"
-        savedCardText.textSize = 14f
-        savedCardText.setTextColor(android.graphics.Color.parseColor("#007AFF"))
-        savedCardText.setPadding(16, 8, 16, 8)
+        savedCardText.tag = "saved_card_message"
+        savedCardText.text = "💳 Usando tarjeta guardada: $cardType •••• $lastFour"
+        savedCardText.textSize = 16f
+        savedCardText.setTextColor(android.graphics.Color.parseColor("#FFFFFF"))
+        savedCardText.setPadding(20, 16, 20, 16)
         savedCardText.background = android.graphics.drawable.GradientDrawable().apply {
-            setColor(android.graphics.Color.parseColor("#F0F8FF"))
-            cornerRadius = 8f
+            setColor(android.graphics.Color.parseColor("#4CAF50"))
+            cornerRadius = 12f
         }
+        savedCardText.gravity = android.view.Gravity.CENTER
         
         // Crear layoutParams con márgenes
         val layoutParams = android.widget.LinearLayout.LayoutParams(
             android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
             android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
         )
-        layoutParams.setMargins(0, 0, 0, 16) // Margen inferior
+        layoutParams.setMargins(0, 0, 0, 20)
         savedCardText.layoutParams = layoutParams
         
-        // Agregar el mensaje al inicio del contenedor
-        binding.cardInputContainer.addView(savedCardText, 0)
+        // Agregar el mensaje al contenedor
+        binding.cardInputContainer.addView(savedCardText)
         
-        // También mostrar un mensaje explicativo con botón para cambiar tarjeta
-        val instructionText = android.widget.TextView(this)
-        instructionText.tag = "instruction_message"
-        instructionText.text = "Toca aquí para usar una tarjeta diferente"
-        instructionText.textSize = 12f
-        instructionText.setTextColor(android.graphics.Color.parseColor("#007AFF"))
-        instructionText.setPadding(16, 4, 16, 12)
-        instructionText.isClickable = true
-        instructionText.isFocusable = true
-        
-        // Click listener para permitir cambiar tarjeta
-        instructionText.setOnClickListener {
-            // Limpiar la vista y restaurar los campos de entrada
-            binding.cardInputContainer.removeAllViews()
-            // Ya no necesitamos recrear el CardInputWidget, los campos ya están en el layout
-            setupCardFieldValidation()
+        // Solo en modo setup mostrar opción para cambiar tarjeta
+        if (isSetupMode) {
+            val instructionText = android.widget.TextView(this)
+            instructionText.tag = "instruction_message"
+            instructionText.text = "Toca aquí para agregar una tarjeta diferente"
+            instructionText.textSize = 12f
+            instructionText.setTextColor(android.graphics.Color.parseColor("#007AFF"))
+            instructionText.setPadding(16, 4, 16, 12)
+            instructionText.isClickable = true
+            instructionText.isFocusable = true
+            instructionText.gravity = android.view.Gravity.CENTER
+            
+            instructionText.setOnClickListener {
+                // Mostrar campos para nueva tarjeta
+                binding.cardNumberEditText.visibility = android.view.View.VISIBLE
+                binding.expiryDateEditText.visibility = android.view.View.VISIBLE  
+                binding.cvvEditText.visibility = android.view.View.VISIBLE
+                // Limpiar mensajes
+                clearDuplicateMessages()
+                setupCardFieldValidation()
+            }
+            
+            val instructionLayoutParams = android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            instructionLayoutParams.setMargins(0, 0, 0, 16)
+            instructionText.layoutParams = instructionLayoutParams
+            
+            binding.cardInputContainer.addView(instructionText)
         }
-        
-        val instructionLayoutParams = android.widget.LinearLayout.LayoutParams(
-            android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-            android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
-        )
-        instructionLayoutParams.setMargins(0, 0, 0, 16)
-        instructionText.layoutParams = instructionLayoutParams
-        
-        binding.cardInputContainer.addView(instructionText, 1)
+    }
     }
     
     private fun createPaymentIntent() {
@@ -402,17 +405,20 @@ class CardPaymentActivity : AppCompatActivity() {
                         binding.paymentIdTextView.visibility = android.view.View.VISIBLE
                     }
                     
-                    // Habilitar botón si hay campos válidos O hay tarjeta guardada
-                    val cardNumber = binding.cardNumberEditText.text.toString().replace(" ", "")
-                    val expiryDate = binding.expiryDateEditText.text.toString()
-                    val cvv = binding.cvvEditText.text.toString()
-                    val hasNewCardData = cardNumber.isNotEmpty() && expiryDate.isNotEmpty() && cvv.isNotEmpty()
-                    val hasValidCard = hasNewCardData || PaymentMethodManager.hasSavedCard(this@CardPaymentActivity)
-                    
-                    binding.payButton.isEnabled = hasValidCard
+                    // Habilitar botón según el contexto
+                    if (!isSetupMode) {
+                        // En modo pago: habilitar si hay tarjeta guardada O campos válidos
+                        if (PaymentMethodManager.hasSavedCard(this@CardPaymentActivity)) {
+                            binding.payButton.isEnabled = true
+                            Log.d(TAG, "Payment Intent creado - Botón habilitado con tarjeta guardada")
+                        } else {
+                            // Verificar campos manuales
+                            validateFields()
+                            Log.d(TAG, "Payment Intent creado - Verificando campos manuales")
+                        }
+                    }
                     
                     Log.d(TAG, "Payment Intent creado: $paymentIntentId")
-                    Log.d(TAG, "Botón habilitado: $hasValidCard (NewCard: $hasNewCardData, SavedCard: ${PaymentMethodManager.hasSavedCard(this@CardPaymentActivity)})")
                 } else {
                     showError("Error preparando el pago: ${response.error}")
                 }

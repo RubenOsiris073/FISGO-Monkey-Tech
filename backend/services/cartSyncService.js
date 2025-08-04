@@ -178,7 +178,8 @@ const processPayment = async (identifier, paymentInfo) => {
           sessionId: sessionId
         };
       } catch (transactionError) {
-        Logger.error('Error creando transacción:', transactionError);
+        Logger.error('Error creando transacción:', transactionError.message || transactionError);
+        console.error('Error completo al crear transacción:', transactionError);
         // Continuar aunque la transacción falle, la venta ya se creó
       }
     }

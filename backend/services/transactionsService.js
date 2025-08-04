@@ -134,8 +134,9 @@ const createTransaction = async (transactionData) => {
       timestamp: new Date().toISOString() // Convertir serverTimestamp a string ISO para la respuesta
     };
   } catch (error) {
-    Logger.error("Error al crear transacción:", error);
-    throw new Error(`Error al crear transacción: ${error.message}`);
+    Logger.error("Error al crear transacción:", error.message || error);
+    console.error("Error completo createTransaction:", error);
+    throw new Error(`Error al crear transacción: ${error.message || error}`);
   }
 };
 

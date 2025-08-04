@@ -62,7 +62,8 @@ class CardPaymentActivity : AppCompatActivity() {
         Log.d(TAG, "onCreate - Received setup_mode: $isSetupMode")
         Log.d(TAG, "onCreate - Intent extras: ${intent.extras}")
         
-        if (paymentAmount <= 0) {
+        // En modo setup, el monto puede ser 0
+        if (!isSetupMode && paymentAmount <= 0) {
             Log.e(TAG, "Invalid payment amount: $paymentAmount")
             showError("Monto inválido para procesar el pago")
             finish()
@@ -76,10 +77,6 @@ class CardPaymentActivity : AppCompatActivity() {
         // Solo crear Payment Intent si no es modo configuración
         if (!isSetupMode) {
             createPaymentIntent()
-        } else {
-            // En modo configuración, habilitar el botón inmediatamente cuando la tarjeta sea válida
-            binding.payButton.text = "Save Card"
-            binding.payButton.isEnabled = false
         }
     }
     
@@ -98,25 +95,29 @@ class CardPaymentActivity : AppCompatActivity() {
     }
     
     private fun setupUI() {
-        // DEBUGGING: Verificar si hay inconsistencias en el monto
-        if (paymentAmount <= 1.0 && !isSetupMode) {
-            Log.w(TAG, "WARNING: Received suspiciously low amount ($paymentAmount) in payment mode")
-            Log.w(TAG, "This might indicate a data transfer issue")
-        }
-        
-        // Configurar el monto en la UI con formato correcto
-        val formatter = NumberFormat.getCurrencyInstance(Locale("es", "MX"))
-        val formattedAmount = formatter.format(paymentAmount)
-        
-        binding.paymentAmountTextView.text = formattedAmount
-        
         // Configurar texto del botón según el modo
         if (isSetupMode) {
-            binding.payButton.text = "Save Card"
+            // En modo setup: ocultar monto y cambiar texto
+            binding.paymentAmountTextView.visibility = android.view.View.GONE
+            binding.payButton.text = "Agregar Tarjeta"
             binding.payButton.isEnabled = false
+            
+            // Cambiar título si es necesario
+            title = "Agregar Tarjeta"
         } else {
+            // En modo pago: mostrar monto y configurar para pago
+            val formatter = NumberFormat.getCurrencyInstance(Locale("es", "MX"))
+            val formattedAmount = formatter.format(paymentAmount)
+            
+            binding.paymentAmountTextView.text = formattedAmount
+            binding.paymentAmountTextView.visibility = android.view.View.VISIBLE
             binding.payButton.text = "🔒 Pagar $formattedAmount"
             binding.payButton.isEnabled = false
+            
+            // DEBUGGING: Verificar si hay inconsistencias en el monto
+            if (paymentAmount <= 1.0) {
+                Log.w(TAG, "WARNING: Received suspiciously low amount ($paymentAmount) in payment mode")
+            }
         }
         
         // Configurar botón de pago
@@ -128,37 +129,52 @@ class CardPaymentActivity : AppCompatActivity() {
         binding.errorCard.visibility = android.view.View.GONE
         
         // Log para debugging
-        Log.d(TAG, "setupUI - Amount: $paymentAmount, Formatted: $formattedAmount, SetupMode: $isSetupMode")
-        Log.d(TAG, "setupUI - Button text: ${binding.payButton.text}")
+        Log.d(TAG, "setupUI - SetupMode: $isSetupMode, Button text: ${binding.payButton.text}")
     }
     
     private fun setupCardInput() {
         // Limpiar mensajes antiguos si existen
         clearDuplicateMessages()
         
-        // Verificar si hay una tarjeta guardada y precargar información visual
-        if (PaymentMethodManager.hasSavedCard(this) && !isSetupMode) {
+        // En modo setup, siempre mostrar el input de tarjeta nueva
+        // En modo pago, verificar si hay tarjeta guardada
+        if (!isSetupMode && PaymentMethodManager.hasSavedCard(this)) {
             val cardType = PaymentMethodManager.getSavedCardType(this)
             val lastFour = PaymentMethodManager.getSavedCardLastFour(this)
             
             // Mostrar información de la tarjeta guardada en lugar del input
             showSavedCardInfo(cardType, lastFour)
-            return // No crear CardInputWidget si hay tarjeta guardada
+            return // No crear CardInputWidget si hay tarjeta guardada y no estamos en modo setup
         }
         
-        // Solo crear CardInputWidget si no hay tarjeta guardada
+        // Crear CardInputWidget para nueva tarjeta
         cardInputWidget = CardInputWidget(this)
+        
+        // Configurar estilos para mejorar la visibilidad
+        cardInputWidget?.setCardTextColor(android.graphics.Color.BLACK)
+        cardInputWidget?.setCardHintTextColor(android.graphics.Color.GRAY)
+        
+        // Configurar padding y background para mejor visibilidad
+        cardInputWidget?.setPadding(16, 16, 16, 16)
+        cardInputWidget?.setBackgroundColor(android.graphics.Color.WHITE)
+        
+        // Configurar parámetros de layout
+        val layoutParams = android.widget.FrameLayout.LayoutParams(
+            android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+            android.widget.FrameLayout.LayoutParams.WRAP_CONTENT
+        )
+        cardInputWidget?.layoutParams = layoutParams
+        
         binding.cardInputContainer.addView(cardInputWidget!!)
         
-        // Listener para validar la tarjeta - solo si se creó CardInputWidget
+        // Configurar listener para validación
         cardInputWidget?.setCardValidCallback { isValid, _ ->
-            // En modo setup, solo requerimos que la tarjeta sea válida
-            // En modo pago, requerimos tarjeta válida Y clientSecret (O que haya tarjeta guardada)
+            // En modo setup: solo requerir que la tarjeta sea válida
+            // En modo pago: requerir tarjeta válida Y clientSecret
             val hasValidPayment = if (isSetupMode) {
                 isValid
             } else {
-                // Para pagos: tarjeta válida O usar tarjeta guardada + clientSecret listo
-                (isValid && clientSecret != null) || (PaymentMethodManager.hasSavedCard(this) && clientSecret != null)
+                isValid && clientSecret != null
             }
             
             binding.payButton.isEnabled = hasValidPayment
@@ -168,7 +184,7 @@ class CardPaymentActivity : AppCompatActivity() {
             cardBrand?.let { updateCardLogos(it.code) }
             
             // Log para debugging
-            Log.d(TAG, "Card validation - Valid: $isValid, ClientSecret: ${clientSecret != null}, HasSavedCard: ${PaymentMethodManager.hasSavedCard(this)}, Button enabled: ${binding.payButton.isEnabled}")
+            Log.d(TAG, "Card validation - Valid: $isValid, SetupMode: $isSetupMode, Button enabled: $hasValidPayment")
         }
     }
     
@@ -281,7 +297,23 @@ class CardPaymentActivity : AppCompatActivity() {
         instructionText.setOnClickListener {
             // Limpiar la vista y mostrar el input de tarjeta
             binding.cardInputContainer.removeAllViews()
+            
+            // Crear nuevo CardInputWidget
             cardInputWidget = CardInputWidget(this@CardPaymentActivity)
+            
+            // Configurar estilos para mejorar la visibilidad
+            cardInputWidget?.setCardTextColor(android.graphics.Color.BLACK)
+            cardInputWidget?.setCardHintTextColor(android.graphics.Color.GRAY)
+            cardInputWidget?.setPadding(16, 16, 16, 16)
+            cardInputWidget?.setBackgroundColor(android.graphics.Color.WHITE)
+            
+            // Configurar parámetros de layout
+            val layoutParams = android.widget.FrameLayout.LayoutParams(
+                android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+                android.widget.FrameLayout.LayoutParams.WRAP_CONTENT
+            )
+            cardInputWidget?.layoutParams = layoutParams
+            
             binding.cardInputContainer.addView(cardInputWidget)
             
             // Configurar listener
@@ -388,7 +420,7 @@ class CardPaymentActivity : AppCompatActivity() {
                 return
             }
             
-            binding.payButton.text = "Guardando tarjeta..."
+            binding.payButton.text = "Agregando tarjeta..."
             
             lifecycleScope.launch {
                 try {
@@ -407,7 +439,7 @@ class CardPaymentActivity : AppCompatActivity() {
                     )
                     
                     Log.d(TAG, "Tarjeta configurada: $cardBrand **** $lastFour")
-                    Toast.makeText(this@CardPaymentActivity, "¡Tarjeta guardada exitosamente!", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@CardPaymentActivity, "¡Tarjeta agregada exitosamente!", Toast.LENGTH_LONG).show()
                     
                     // Enviar resultado exitoso con flag de setup mode
                     val resultIntent = android.content.Intent()
@@ -417,10 +449,10 @@ class CardPaymentActivity : AppCompatActivity() {
                     
                 } catch (e: Exception) {
                     Log.e(TAG, "Error guardando tarjeta: ${e.message}")
-                    showError("Error guardando la tarjeta: ${e.message}")
+                    showError("Error agregando la tarjeta: ${e.message}")
                     
                     binding.payButton.isEnabled = true
-                    binding.payButton.text = "Guardar Tarjeta"
+                    binding.payButton.text = "Agregar Tarjeta"
                 }
             }
         } else {

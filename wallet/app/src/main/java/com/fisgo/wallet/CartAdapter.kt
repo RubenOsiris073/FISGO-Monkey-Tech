@@ -11,7 +11,8 @@ class CartAdapter(private val cartItems: List<CartItem>) : RecyclerView.Adapter<
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val productName: TextView = view.findViewById(R.id.itemNameText)
         val productQuantity: TextView = view.findViewById(R.id.itemQuantityText)
-        val productPrice: TextView = view.findViewById(R.id.itemTotalText)
+        val productPrice: TextView = view.findViewById(R.id.itemPriceText)
+        val productTotal: TextView = view.findViewById(R.id.itemTotalText)
     }
     
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -30,7 +31,8 @@ class CartAdapter(private val cartItems: List<CartItem>) : RecyclerView.Adapter<
         val totalPrice = item.precio * item.quantity
         android.util.Log.d("CartAdapter", "Item $position - precio: ${item.precio}, quantity: ${item.quantity}, total: $totalPrice")
         
-        holder.productPrice.text = "$${String.format("%.2f", totalPrice)}"
+        holder.productPrice.text = "$${String.format("%.2f", item.precio)}"
+        holder.productTotal.text = "$${String.format("%.2f", totalPrice)}"
     }
     
     override fun getItemCount() = cartItems.size

@@ -6,13 +6,6 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-data class CartItem(
-    val id: Int,
-    val nombre: String,
-    val precio: Double,
-    val quantity: Int
-)
-
 class CartAdapter(private val cartItems: List<CartItem>) : RecyclerView.Adapter<CartAdapter.ViewHolder>() {
     
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {

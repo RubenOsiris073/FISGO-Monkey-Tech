@@ -1,13 +1,17 @@
-const { COLLECTIONS } = require('../config/firebaseManager');
-const firestore = require('../utils/firestoreAdmin');
+const { firebaseManager } = require('../config/firebaseManager');
+const firestoreAdmin = require('../utils/firestoreAdmin');
 const Logger = require('../utils/logger.js');
 
 // Obtener transacciones con un límite
 const getTransactions = async (limitVal) => {
   try {
-    const transactionsRef = collection(db, 'transactions');
-    const q = query(transactionsRef, orderBy('timestamp', 'desc'), limit(limitVal));
-    const querySnapshot = await getDocs(q);
+    await firebaseManager.initialize();
+    const db = firebaseManager.getDb();
+    const admin = firebaseManager.getAdmin();
+    
+    const transactionsRef = db.collection('transactions');
+    const query = transactionsRef.orderBy('timestamp', 'desc').limit(limitVal);
+    const querySnapshot = await query.get();
     
     if (querySnapshot.empty) {
       return [];
@@ -32,15 +36,16 @@ const getUserTransactions = async (userId, limitVal = 20) => {
       throw new Error("Se requiere un userId para obtener las transacciones del usuario");
     }
 
-    const transactionsRef = collection(db, 'transactions');
-    // Simplificar la consulta para evitar el error de índice
-    const q = query(
-      transactionsRef,
-      where('userId', '==', userId),
-      limit(limitVal)
-    );
+    await firebaseManager.initialize();
+    const db = firebaseManager.getDb();
     
-    const querySnapshot = await getDocs(q);
+    const transactionsRef = db.collection('transactions');
+    // Simplificar la consulta para evitar el error de índice
+    const query = transactionsRef
+      .where('userId', '==', userId)
+      .limit(limitVal);
+    
+    const querySnapshot = await query.get();
     
     if (querySnapshot.empty) {
       return [];
@@ -83,7 +88,7 @@ const createTransaction = async (transactionData) => {
   try {
     Logger.info("Creando nueva transacción:", transactionData);
     
-    const { userId, amount, type = 'payment', description, sessionId, paymentMethod } = transactionData;
+    const { userId, amount, type = 'payment', description, sessionId, paymentMethod, saleId } = transactionData;
     
     if (!userId) {
       throw new Error("userId es requerido para crear una transacción");
@@ -92,14 +97,18 @@ const createTransaction = async (transactionData) => {
     if (!amount || isNaN(amount) || amount <= 0) {
       throw new Error("Se requiere un monto válido mayor que cero");
     }
+
+    await firebaseManager.initialize();
+    const db = firebaseManager.getDb();
+    const admin = firebaseManager.getAdmin();
     
-    const transactionsRef = collection(db, 'transactions');
+    const transactionsRef = db.collection('transactions');
     const newTransaction = {
       userId,
       amount: parseFloat(amount),
       type,
       description: description || `${type} de $${amount}`,
-      timestamp: serverTimestamp(),
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
       status: 'completed'
     };
     
@@ -112,7 +121,11 @@ const createTransaction = async (transactionData) => {
       newTransaction.paymentMethod = paymentMethod;
     }
     
-    const docRef = await addDoc(transactionsRef, newTransaction);
+    if (saleId) {
+      newTransaction.saleId = saleId;
+    }
+    
+    const docRef = await transactionsRef.add(newTransaction);
     Logger.info(`Transacción creada con ID: ${docRef.id}`);
     
     return {
@@ -129,11 +142,13 @@ const createTransaction = async (transactionData) => {
 // Obtener una transacción por ID
 const getTransactionById = async (transactionId) => {
   try {
-    const transactionsRef = collection(db, 'transactions');
-    const docRef = doc(transactionsRef, transactionId);
-    const docSnap = await getDoc(docRef);
+    await firebaseManager.initialize();
+    const db = firebaseManager.getDb();
     
-    if (!docSnap.exists()) {
+    const docRef = db.collection('transactions').doc(transactionId);
+    const docSnap = await docRef.get();
+    
+    if (!docSnap.exists) {
       return null;
     }
     
@@ -152,12 +167,15 @@ const getTransactionById = async (transactionId) => {
 // Actualizar el estado de una transacción
 const updateTransactionStatus = async (transactionId, newStatus) => {
   try {
-    const transactionsRef = collection(db, 'transactions');
-    const docRef = doc(transactionsRef, transactionId);
+    await firebaseManager.initialize();
+    const db = firebaseManager.getDb();
+    const admin = firebaseManager.getAdmin();
     
-    await updateDoc(docRef, {
+    const docRef = db.collection('transactions').doc(transactionId);
+    
+    await docRef.update({
       status: newStatus,
-      updatedAt: serverTimestamp()
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
     });
     
     Logger.info(`Transacción ${transactionId} actualizada a estado: ${newStatus}`);

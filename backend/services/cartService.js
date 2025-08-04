@@ -1,6 +1,6 @@
 // Servicio para gestionar carritos compartidos entre POS y wallet móvil
-const { COLLECTIONS } = require('../config/firebaseManager');
-const firestore = require('../utils/firestoreAdmin');
+const { firebaseManager } = require('../config/firebaseManager');
+const firestoreAdmin = require('../utils/firestoreAdmin');
 const Logger = require('../utils/logger.js');
 
 /**
@@ -45,8 +45,11 @@ class CartService {
       };
 
       // Guardar en Firestore
-      const cartsRef = collection(db, 'carts');
-      const docRef = await addDoc(cartsRef, newCartData);
+      await firebaseManager.initialize();
+      const db = firebaseManager.getDb();
+      
+      const cartsRef = db.collection('carts');
+      const docRef = await cartsRef.add(newCartData);
 
       return {
         id: docRef.id,
@@ -65,9 +68,12 @@ class CartService {
    */
   async getCartBySessionId(sessionId) {
     try {
-      const cartsRef = collection(db, 'carts');
-      const q = query(cartsRef, where('sessionId', '==', sessionId));
-      const querySnapshot = await getDocs(q);
+      await firebaseManager.initialize();
+      const db = firebaseManager.getDb();
+      
+      const cartsRef = db.collection('carts');
+      const query = cartsRef.where('sessionId', '==', sessionId);
+      const querySnapshot = await query.get();
 
       if (querySnapshot.empty) {
         return null;
@@ -98,13 +104,16 @@ class CartService {
         throw new Error(`No se encontró el carrito con sessionId: ${sessionId}`);
       }
 
+      await firebaseManager.initialize();
+      const db = firebaseManager.getDb();
+
       const updateData = {
         ...statusData,
         updatedAt: new Date()
       };
 
-      const cartRef = doc(db, 'carts', cart.id);
-      await updateDoc(cartRef, updateData);
+      const cartRef = db.collection('carts').doc(cart.id);
+      await cartRef.update(updateData);
 
       return {
         id: cart.id,
@@ -131,6 +140,9 @@ class CartService {
         throw new Error(`No se encontró el carrito con sessionId: ${sessionId}`);
       }
 
+      await firebaseManager.initialize();
+      const db = firebaseManager.getDb();
+
       const updateData = {
         status: 'completed',
         paymentInfo: {
@@ -140,8 +152,8 @@ class CartService {
         updatedAt: new Date()
       };
 
-      const cartRef = doc(db, 'carts', cart.id);
-      await updateDoc(cartRef, updateData);
+      const cartRef = db.collection('carts').doc(cart.id);
+      await cartRef.update(updateData);
 
       return {
         id: cart.id,

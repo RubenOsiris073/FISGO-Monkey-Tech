@@ -31,7 +31,7 @@ router.post('/', verifyToken, async (req, res) => {
  * @route GET /api/cart/:sessionId
  * @desc Obtiene un carrito por ID de sesión (tanto de cartService como de cartSyncService)
  */
-router.get('/:sessionId', verifyToken, async (req, res) => {
+router.get('/:sessionId', async (req, res) => {
   try {
     const { sessionId } = req.params;
     

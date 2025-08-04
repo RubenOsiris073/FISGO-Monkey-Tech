@@ -4,6 +4,7 @@ const { COLLECTIONS } = require('../config/firebaseManager');
 const firestore = require('../utils/firestoreAdmin');
 const productService = require('../services/productService');
 const Logger = require('../utils/logger.js');
+const { verifyToken } = require('../middleware/auth');
 
 // GET /api/products - Usar el servicio automatizado
 router.get('/', async (req, res) => {
@@ -54,7 +55,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/products - Crear nuevo producto
-router.post('/', async (req, res) => {
+router.post('/', verifyToken, async (req, res) => {
   try {
     const productData = req.body;
     
@@ -101,7 +102,7 @@ router.post('/', async (req, res) => {
 });
 
 // Nuevo endpoint para inicializar stock automáticamente
-router.post('/initialize-stock', async (req, res) => {
+router.post('/initialize-stock', verifyToken, async (req, res) => {
   try {
     Logger.info('🚀 Inicializando stock para todos los productos...');
     
@@ -182,7 +183,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // PUT /api/products/:id - Actualizar producto completo
-router.put('/:id', async (req, res) => {
+router.put('/:id', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
@@ -235,7 +236,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // PUT /api/products/:id/stock - Actualizar stock directamente en el producto
-router.put('/:id/stock', async (req, res) => {
+router.put('/:id/stock', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { adjustment, reason = 'Ajuste manual' } = req.body;
@@ -276,7 +277,7 @@ router.put('/:id/stock', async (req, res) => {
 });
 
 // DELETE /api/products/:id - Eliminar producto completo
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     

@@ -438,40 +438,10 @@ class SyncCodeActivity : AppCompatActivity() {
     private suspend fun syncCartWithBackend(code: String): SyncResult {
         return withContext(Dispatchers.IO) {
             try {
-                val url = URL("https://psychic-bassoon-j65x4rxrvj4c5p54-5000.app.github.dev/api/cart/sync/$code")
-                val connection = url.openConnection() as HttpURLConnection
+                val response = ApiService.syncCart(code)
                 
-                connection.requestMethod = "POST"
-                connection.setRequestProperty("Content-Type", "application/json")
-                connection.doOutput = true
-                connection.connectTimeout = 10000
-                connection.readTimeout = 10000
-                
-                // Enviar datos del usuario
-                val requestData = JSONObject().apply {
-                    put("userId", auth.currentUser?.uid ?: "anonymous")
-                }
-                
-                OutputStreamWriter(connection.outputStream).use { writer ->
-                    writer.write(requestData.toString())
-                    writer.flush()
-                }
-                
-                val responseCode = connection.responseCode
-                val inputStream = if (responseCode == HttpURLConnection.HTTP_OK) {
-                    connection.inputStream
-                } else {
-                    connection.errorStream
-                }
-                
-                val response = BufferedReader(InputStreamReader(inputStream)).use { reader ->
-                    reader.readText()
-                }
-                
-                val jsonResponse = JSONObject(response)
-                
-                if (jsonResponse.getBoolean("success")) {
-                    val data = jsonResponse.getJSONObject("data")
+                if (response.success && response.data != null) {
+                    val data = response.data
                     val itemsArray = data.getJSONArray("items")
                     val items = mutableListOf<CartItem>()
                     
@@ -485,6 +455,28 @@ class SyncCodeActivity : AppCompatActivity() {
                                 quantity = item.getInt("quantity")
                             )
                         )
+                    }
+                    
+                    SyncResult(
+                        success = true,
+                        sessionId = data.getString("sessionId"),
+                        items = items,
+                        total = data.getDouble("total")
+                    )
+                } else {
+                    SyncResult(
+                        success = false,
+                        error = response.error ?: "Error desconocido al sincronizar"
+                    )
+                }
+            } catch (e: Exception) {
+                SyncResult(
+                    success = false,
+                    error = "Error de conexión: ${e.message}"
+                )
+            }
+        }
+    }
                     }
                     
                     SyncResult(
@@ -511,51 +503,31 @@ class SyncCodeActivity : AppCompatActivity() {
     private suspend fun processPaymentWithBackend(paymentMethod: String): PaymentResult {
         return withContext(Dispatchers.IO) {
             try {
-                val url = URL("https://psychic-bassoon-j65x4rxrvj4c5p54-5000.app.github.dev/api/cart/process-payment")
-                val connection = url.openConnection() as HttpURLConnection
+                val response = ApiService.processPayment(
+                    sessionId = sessionId ?: "",
+                    amount = cartTotal,
+                    paymentMethod = paymentMethod
+                )
                 
-                connection.requestMethod = "POST"
-                connection.setRequestProperty("Content-Type", "application/json")
-                connection.doOutput = true
-                connection.connectTimeout = 10000
-                connection.readTimeout = 10000
-                
-                // Enviar datos del pago
-                val requestData = JSONObject().apply {
-                    put("sessionId", sessionId)
-                    put("userId", auth.currentUser?.uid ?: "anonymous")
-                    put("amount", cartTotal)
-                    put("paymentMethod", paymentMethod)
-                }
-                
-                OutputStreamWriter(connection.outputStream).use { writer ->
-                    writer.write(requestData.toString())
-                    writer.flush()
-                }
-                
-                val responseCode = connection.responseCode
-                val inputStream = if (responseCode == HttpURLConnection.HTTP_OK) {
-                    connection.inputStream
-                } else {
-                    connection.errorStream
-                }
-                
-                val response = BufferedReader(InputStreamReader(inputStream)).use { reader ->
-                    reader.readText()
-                }
-                
-                val jsonResponse = JSONObject(response)
-                
-                if (jsonResponse.getBoolean("success")) {
-                    val data = jsonResponse.getJSONObject("data")
+                if (response.success && response.data != null) {
                     PaymentResult(
                         success = true,
-                        transactionId = data.optString("transactionId", sessionId ?: "")
+                        transactionId = response.data.optString("transactionId", sessionId ?: "")
                     )
                 } else {
                     PaymentResult(
                         success = false,
-                        error = jsonResponse.getString("error")
+                        error = response.error ?: "Error procesando el pago"
+                    )
+                }
+            } catch (e: Exception) {
+                PaymentResult(
+                    success = false,
+                    error = "Error de conexión: ${e.message}"
+                )
+            }
+        }
+    }
                     )
                 }
             } catch (e: Exception) {

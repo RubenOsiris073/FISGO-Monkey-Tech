@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const detectionService = require('../services/detectionService');
 const Logger = require('../utils/logger.js');
+const { verifyToken } = require('../middleware/auth');
 
 // Realizar una detección
 router.post('/detect', async (req, res) => {
@@ -53,12 +54,12 @@ router.get('/detections', async (req, res) => {
 });
 
 // Obtener estado de detección
-router.get('/detection-mode', (req, res) => {
+router.get('/detection-mode', async (req, res) => {
   res.json(detectionService.getDetectionMode());
 });
 
 // Cambiar modo de detección
-router.post('/detection-mode', (req, res) => {
+router.post('/detection-mode', verifyToken, (req, res) => {
   const { active } = req.body;
   
   if (typeof active !== 'boolean') {
@@ -95,7 +96,7 @@ router.get('/detection/continuous/status', async (req, res) => {
 });
 
 // Configuración de detección continua
-router.post('/detection/continuous', async (req, res) => {
+router.post('/detection/continuous', verifyToken, async (req, res) => {
   try {
     const { active, intervalMs } = req.body;
     const result = await detectionService.setDetectionMode(active, intervalMs);

@@ -5,7 +5,7 @@ const Logger = require('../utils/logger.js');
 
 dotenv.config();
 
-// Middleware para verificar JWT token
+// Middleware para verificar JWT token o Firebase token
 const verifyToken = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
@@ -19,19 +19,50 @@ const verifyToken = async (req, res, next) => {
 
     const token = authHeader.replace('Bearer ', '');
     
-    // Verificar JWT token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    try {
+      // Primero intentar verificar como JWT local
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      
+      // Agregar información del usuario al request
+      req.user = {
+        uid: decoded.uid,
+        email: decoded.email,
+        emailVerified: decoded.emailVerified,
+        role: decoded.role || 'user'
+      };
+      
+      return next();
+    } catch (jwtError) {
+      // Si falla JWT local, intentar con Firebase
+      try {
+        // Asegurar que Firebase esté inicializado
+        await firebaseManager.initialize();
+        
+        if (!firebaseManager.isInitialized()) {
+          throw new Error('Firebase Admin no pudo inicializarse');
+        }
+        
+        const admin = firebaseManager.getAdmin();
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        
+        // Agregar información del usuario de Firebase al request
+        req.user = {
+          uid: decodedToken.uid,
+          email: decodedToken.email,
+          emailVerified: decodedToken.email_verified,
+          role: 'user' // Por defecto role user para tokens de Firebase
+        };
+        
+        Logger.info(`Usuario autenticado con Firebase: ${decodedToken.email}`);
+        return next();
+      } catch (firebaseError) {
+        Logger.error('Error verificando token Firebase:', firebaseError.message);
+        throw new Error('Token inválido');
+      }
+    }
     
-    // Agregar información del usuario al request
-    req.user = {
-      uid: decoded.uid,
-      email: decoded.email,
-      emailVerified: decoded.emailVerified
-    };
-    
-    next();
   } catch (error) {
-    Logger.error('Error verificando token JWT:', error.message);
+    Logger.error('Error verificando token:', error.message);
     
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({ 
@@ -40,7 +71,7 @@ const verifyToken = async (req, res, next) => {
       });
     }
     
-    if (error.name === 'JsonWebTokenError') {
+    if (error.name === 'JsonWebTokenError' || error.message === 'Token inválido') {
       return res.status(401).json({ 
         error: 'Token inválido',
         message: 'El token de autenticación no es válido' 

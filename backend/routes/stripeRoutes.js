@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 const stripeService = require('../services/stripeService');
 const Logger = require('../utils/logger.js');
+const { verifyToken } = require('../middleware/auth');
 
 // Crear Payment Intent
-router.post('/create-payment-intent', async (req, res) => {
+router.post('/create-payment-intent', verifyToken, async (req, res) => {
   try {
     const { amount, currency = 'mxn', metadata = {} } = req.body;
 
@@ -34,7 +35,7 @@ router.post('/create-payment-intent', async (req, res) => {
 });
 
 // Confirmar pago
-router.post('/confirm-payment', async (req, res) => {
+router.post('/confirm-payment', verifyToken, async (req, res) => {
   try {
     const { paymentIntentId } = req.body;
 
@@ -64,7 +65,7 @@ router.post('/confirm-payment', async (req, res) => {
 });
 
 // Obtener información de un pago
-router.get('/payment/:paymentIntentId', async (req, res) => {
+router.get('/payment/:paymentIntentId', verifyToken, async (req, res) => {
   try {
     const { paymentIntentId } = req.params;
 
@@ -87,7 +88,7 @@ router.get('/payment/:paymentIntentId', async (req, res) => {
 });
 
 // Endpoint para pago de prueba
-router.post('/test-payment', async (req, res) => {
+router.post('/test-payment', verifyToken, async (req, res) => {
   try {
     const { amount, currency = 'mxn', metadata = {} } = req.body;
 
@@ -142,7 +143,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 });
 
 // Crear cliente
-router.post('/create-customer', async (req, res) => {
+router.post('/create-customer', verifyToken, async (req, res) => {
   try {
     const { email, name, metadata = {} } = req.body;
 

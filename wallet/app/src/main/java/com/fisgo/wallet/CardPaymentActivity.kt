@@ -342,30 +342,26 @@ class CardPaymentActivity : AppCompatActivity() {
     
     private suspend fun createPaymentIntentRequest(): PaymentIntentResponse {
         return withContext(Dispatchers.IO) {
-            val requestBody = PaymentIntentRequest(
-                amount = paymentAmount,
-                currency = "mxn",
-                metadata = mapOf(
-                    "source" to "android-wallet",
-                    "timestamp" to System.currentTimeMillis().toString()
+            try {
+                val response = ApiService.createPaymentIntent(paymentAmount)
+                
+                if (response.success && response.data != null) {
+                    PaymentIntentResponse(
+                        success = true,
+                        client_secret = response.data.getString("client_secret"),
+                        paymentIntentId = response.data.getString("id")
+                    )
+                } else {
+                    PaymentIntentResponse(
+                        success = false, 
+                        error = response.error ?: "Error creando Payment Intent"
+                    )
+                }
+            } catch (e: Exception) {
+                PaymentIntentResponse(
+                    success = false, 
+                    error = "Error de conexión: ${e.message}"
                 )
-            )
-            
-            val json = gson.toJson(requestBody)
-            val body = json.toRequestBody("application/json".toMediaType())
-            
-            val request = Request.Builder()
-                .url("$baseUrl/api/stripe/create-payment-intent")
-                .post(body)
-                .build()
-            
-            val response = httpClient.newCall(request).execute()
-            val responseBody = response.body?.string() ?: ""
-            
-            if (response.isSuccessful) {
-                gson.fromJson(responseBody, PaymentIntentResponse::class.java)
-            } else {
-                PaymentIntentResponse(false, error = "Error del servidor: ${response.code}")
             }
         }
     }

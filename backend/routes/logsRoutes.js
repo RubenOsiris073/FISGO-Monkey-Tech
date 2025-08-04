@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
+const { verifyToken } = require('../middleware/auth');
 
 // Almacenar logs en memoria para tiempo real
 let recentLogs = [];
@@ -51,7 +52,7 @@ console.info = (...args) => {
 };
 
 // GET /api/logs - Obtener logs recientes
-router.get('/', (req, res) => {
+router.get('/', verifyToken, (req, res) => {
   const { level, limit = 100, since } = req.query;
   
   let filteredLogs = [...recentLogs];
@@ -83,7 +84,7 @@ router.get('/', (req, res) => {
 });
 
 // GET /api/logs/stream - Stream de logs en tiempo real (Server-Sent Events)
-router.get('/stream', (req, res) => {
+router.get('/stream', verifyToken, (req, res) => {
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
@@ -115,7 +116,7 @@ router.get('/stream', (req, res) => {
 });
 
 // POST /api/logs/clear - Limpiar logs
-router.post('/clear', (req, res) => {
+router.post('/clear', verifyToken, (req, res) => {
   recentLogs = [];
   console.log('🧹 Logs limpiados desde la interfaz admin');
   
@@ -126,7 +127,7 @@ router.post('/clear', (req, res) => {
 });
 
 // GET /api/logs/download - Descargar logs como archivo
-router.get('/download', (req, res) => {
+router.get('/download', verifyToken, (req, res) => {
   const { format = 'json' } = req.query;
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   

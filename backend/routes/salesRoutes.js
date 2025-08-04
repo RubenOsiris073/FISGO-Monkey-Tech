@@ -3,9 +3,10 @@ const router = express.Router();
 const salesService = require('../services/salesService');
 const Logger = require('../utils/logger.js');
 const salesController = require('../controllers/salesController');
+const { verifyToken } = require('../middleware/auth');
 
 // Obtener todas las ventas
-router.get('/', async (req, res) => {
+router.get('/', verifyToken, async (req, res) => {
   try {
     const sales = await salesService.getAllSales();
     // Asegúrate de devolver un objeto con una propiedad sales que contenga el array
@@ -17,7 +18,7 @@ router.get('/', async (req, res) => {
 });
 
 // Crear nueva venta
-router.post('/', async (req, res) => {
+router.post('/', verifyToken, async (req, res) => {
   try {
     const result = await salesService.createSale(req.body);
     res.json(result);
@@ -28,9 +29,9 @@ router.post('/', async (req, res) => {
 });
 
 // Obtener ventas paginadas
-router.get('/paginated', salesController.getSalesPaginatedController);
+router.get('/paginated', verifyToken, salesController.getSalesPaginatedController);
 
 // Obtener ventas desde cache
-router.get('/cached', salesController.getCachedSalesController);
+router.get('/cached', verifyToken, salesController.getCachedSalesController);
 
 module.exports = router;

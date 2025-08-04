@@ -3,12 +3,13 @@ const router = express.Router();
 const cartService = require('../services/cartService');
 const cartSyncService = require('../services/cartSyncService');
 const Logger = require('../utils/logger.js');
+const { verifyToken } = require('../middleware/auth');
 
 /**
  * @route POST /api/cart
  * @desc Crea un nuevo carrito compartido
  */
-router.post('/', async (req, res) => {
+router.post('/', verifyToken, async (req, res) => {
   try {
     const cartData = req.body;
     const newCart = await cartService.createCart(cartData);
@@ -30,7 +31,7 @@ router.post('/', async (req, res) => {
  * @route GET /api/cart/:sessionId
  * @desc Obtiene un carrito por ID de sesión (tanto de cartService como de cartSyncService)
  */
-router.get('/:sessionId', async (req, res) => {
+router.get('/:sessionId', verifyToken, async (req, res) => {
   try {
     const { sessionId } = req.params;
     
@@ -102,7 +103,7 @@ router.patch('/:sessionId/status', async (req, res) => {
  * @route POST /api/cart/:sessionId/payment
  * @desc Procesa el pago de un carrito
  */
-router.post('/:sessionId/payment', async (req, res) => {
+router.post('/:sessionId/payment', verifyToken, async (req, res) => {
   try {
     const { sessionId } = req.params;
     const paymentData = req.body;
@@ -187,7 +188,7 @@ router.post('/sync/:code', async (req, res) => {
  * @route POST /api/cart/process-payment
  * @desc Procesar pago desde la app móvil
  */
-router.post('/process-payment', async (req, res) => {
+router.post('/process-payment', verifyToken, async (req, res) => {
   try {
     const { sessionId, userId, amount } = req.body;
     

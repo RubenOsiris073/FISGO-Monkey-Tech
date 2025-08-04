@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 const transactionsService = require('../services/transactionsService');
 const Logger = require('../utils/logger.js');
+const { verifyToken } = require('../middleware/auth');
 
 // Obtener todas las transacciones con límite
-router.get('/', async (req, res) => {
+router.get('/', verifyToken, async (req, res) => {
   try {
     const limitVal = parseInt(req.query.limit) || 10;
     const transactions = await transactionsService.getTransactions(limitVal);
@@ -23,7 +24,7 @@ router.get('/', async (req, res) => {
 });
 
 // Obtener transacciones por usuario
-router.get('/user/:userId', async (req, res) => {
+router.get('/user/:userId', verifyToken, async (req, res) => {
   try {
     const { userId } = req.params;
     const limitVal = parseInt(req.query.limit) || 20;
@@ -47,7 +48,7 @@ router.get('/user/:userId', async (req, res) => {
 });
 
 // Verificar estado de transacción por ID
-router.get('/:transactionId/status', async (req, res) => {
+router.get('/:transactionId/status', verifyToken, async (req, res) => {
   try {
     const { transactionId } = req.params;
     // Esta ruta es un placeholder por ahora
@@ -67,7 +68,7 @@ router.get('/:transactionId/status', async (req, res) => {
 });
 
 // Crear una nueva transacción
-router.post('/', async (req, res) => {
+router.post('/', verifyToken, async (req, res) => {
   try {
     const transactionData = req.body;
     
@@ -89,7 +90,7 @@ router.post('/', async (req, res) => {
 });
 
 // Obtener una transacción específica por ID
-router.get('/:transactionId', async (req, res) => {
+router.get('/:transactionId', verifyToken, async (req, res) => {
   try {
     const { transactionId } = req.params;
     
@@ -118,7 +119,7 @@ router.get('/:transactionId', async (req, res) => {
 });
 
 // Crear reembolso para una transacción específica
-router.post('/:transactionId/refund', async (req, res) => {
+router.post('/:transactionId/refund', verifyToken, async (req, res) => {
   try {
     const { transactionId } = req.params;
     const { reason, amount } = req.body;

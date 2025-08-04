@@ -24,6 +24,7 @@
 
             <!-- Título del header -->
             <TextView
+                android:id="@+id/headerTitleTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Pago"
@@ -34,6 +35,7 @@
                 android:layout_marginBottom="8dp" />
 
             <TextView
+                android:id="@+id/headerSubtitleTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Completa tu pago seguro"
@@ -57,12 +59,14 @@
 
             <!-- Sección de monto a pagar -->
             <LinearLayout
+                android:id="@+id/amountSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/amount_section_bg"
                 android:orientation="vertical"
                 android:padding="20dp"
-                android:layout_marginBottom="24dp">
+                android:layout_marginBottom="24dp"
+                android:visibility="visible">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -172,14 +176,84 @@
 
             </LinearLayout>
 
-            <!-- Container para el input de Stripe -->
-            <FrameLayout
+            <!-- Container para el input de tarjeta personalizado -->
+            <LinearLayout
                 android:id="@+id/cardInputContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/card_input_bg"
+                android:orientation="vertical"
                 android:padding="16dp"
-                android:layout_marginBottom="24dp" />
+                android:layout_marginBottom="24dp">
+
+                <!-- Campo de número de tarjeta -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    app:boxStrokeColor="#007AFF"
+                    app:hintTextColor="#007AFF">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/cardNumberEditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Número de tarjeta"
+                        android:inputType="number"
+                        android:maxLength="19"
+                        android:textSize="16sp"
+                        android:textColor="#1D1D1F" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Campos de fecha y CVV en una fila -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <!-- Campo de fecha de expiración -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        app:boxStrokeColor="#007AFF"
+                        app:hintTextColor="#007AFF">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/expiryDateEditText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="MM/AA"
+                            android:inputType="number"
+                            android:maxLength="5"
+                            android:textSize="16sp"
+                            android:textColor="#1D1D1F" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Campo de CVV -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        app:boxStrokeColor="#007AFF"
+                        app:hintTextColor="#007AFF">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/cvvEditText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="CVV"
+                            android:inputType="numberPassword"
+                            android:maxLength="4"
+                            android:textSize="16sp"
+                            android:textColor="#1D1D1F" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                </LinearLayout>
+
+            </LinearLayout>
 
             <!-- Información de seguridad -->
             <LinearLayout

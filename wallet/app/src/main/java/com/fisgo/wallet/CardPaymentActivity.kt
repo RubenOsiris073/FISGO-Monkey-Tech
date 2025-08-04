@@ -150,10 +150,6 @@ class CardPaymentActivity : AppCompatActivity() {
         // Crear CardInputWidget para nueva tarjeta
         cardInputWidget = CardInputWidget(this)
         
-        // Configurar estilos para mejorar la visibilidad
-        cardInputWidget?.setCardTextColor(android.graphics.Color.BLACK)
-        cardInputWidget?.setCardHintTextColor(android.graphics.Color.GRAY)
-        
         // Configurar padding y background para mejor visibilidad
         cardInputWidget?.setPadding(16, 16, 16, 16)
         cardInputWidget?.setBackgroundColor(android.graphics.Color.WHITE)
@@ -301,9 +297,7 @@ class CardPaymentActivity : AppCompatActivity() {
             // Crear nuevo CardInputWidget
             cardInputWidget = CardInputWidget(this@CardPaymentActivity)
             
-            // Configurar estilos para mejorar la visibilidad
-            cardInputWidget?.setCardTextColor(android.graphics.Color.BLACK)
-            cardInputWidget?.setCardHintTextColor(android.graphics.Color.GRAY)
+            // Configurar padding y background para mejor visibilidad
             cardInputWidget?.setPadding(16, 16, 16, 16)
             cardInputWidget?.setBackgroundColor(android.graphics.Color.WHITE)
             

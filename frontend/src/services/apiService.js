@@ -585,6 +585,34 @@ const apiService = {
       console.error('Error en searchProducts:', error.message);
       throw error;
     }
+  },
+
+  // Función para obtener logs del backend
+  getLogs: async (params = {}) => {
+    try {
+      console.log('Obteniendo logs del servidor...');
+      const response = await api.get('/logs', { params });
+      
+      return response;
+      
+    } catch (error) {
+      console.error('Error en getLogs:', error.message);
+      throw error;
+    }
+  },
+
+  // Función para limpiar logs del backend
+  clearLogs: async () => {
+    try {
+      console.log('Limpiando logs del servidor...');
+      const response = await api.post('/logs/clear');
+      
+      return response;
+      
+    } catch (error) {
+      console.error('Error en clearLogs:', error.message);
+      throw error;
+    }
   }
 };
 

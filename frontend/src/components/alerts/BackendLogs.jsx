@@ -1,30 +1,26 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Card, Button, Form, Badge, Alert, Spinner } from 'react-bootstrap';
+import { Card, Form, Badge, Alert, Spinner } from 'react-bootstrap';
 import { 
   FaTerminal, 
-  FaPlay, 
-  FaPause, 
-  FaTrash, 
-  FaDownload, 
-  FaFilter,
   FaSearch,
   FaCircle,
   FaExclamationTriangle,
   FaInfoCircle,
-  FaExclamationCircle
+  FaExclamationCircle,
+  FaUser
 } from 'react-icons/fa';
 import apiService from '../../services/apiService';
+import { useAuth } from '../../contexts/AuthContext';
 import '../../styles/components/alerts/logs.css';
 
 const BackendLogs = () => {
+  const { user } = useAuth();
   const [logs, setLogs] = useState([]);
   const [filteredLogs, setFilteredLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState(null);
-  const [filterLevel, setFilterLevel] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [autoScroll, setAutoScroll] = useState(true);
   const [maxLogs, setMaxLogs] = useState(500);
   
   const logsContainerRef = useRef(null);
@@ -36,31 +32,92 @@ const BackendLogs = () => {
       setLoading(true);
       setError(null);
       
-      const response = await apiService.get('/logs', {
-        params: { limit: maxLogs, level: filterLevel !== 'all' ? filterLevel : undefined }
-      });
+      const params = {
+        limit: maxLogs
+      };
       
-      if (response.data.success) {
-        setLogs(response.data.logs);
+      const response = await apiService.getLogs(params);
+      
+      if (response && response.data && response.data.success) {
+        // Limpiar los mensajes de los logs antes de guardarlos
+        const cleanedLogs = response.data.logs.map(log => ({
+          ...log,
+          message: cleanLogMessage(log.message)
+        }));
+        setLogs(cleanedLogs);
       }
     } catch (err) {
       console.error('Error loading logs:', err);
-      setError('Error al cargar los logs del backend');
+      
+      // Si falla la autenticación, mostrar logs de demostración
+      if (err.message?.includes('401') || err.message?.includes('unauthorized')) {
+        const mockLogs = [
+          {
+            id: 1,
+            timestamp: new Date().toISOString(),
+            level: 'INFO',
+            message: 'Servidor iniciado correctamente en puerto 5000'
+          },
+          {
+            id: 2,
+            timestamp: new Date(Date.now() - 30000).toISOString(),
+            level: 'INFO',
+            message: 'Base de datos Firebase conectada exitosamente'
+          },
+          {
+            id: 3,
+            timestamp: new Date(Date.now() - 60000).toISOString(),
+            level: 'WARNING',
+            message: 'Cache de productos expirado, recargando datos'
+          },
+          {
+            id: 4,
+            timestamp: new Date(Date.now() - 90000).toISOString(),
+            level: 'ERROR',
+            message: 'Error temporal al conectar con Firebase, reintentando...'
+          },
+          {
+            id: 5,
+            timestamp: new Date(Date.now() - 120000).toISOString(),
+            level: 'INFO',
+            message: 'Middleware de autenticación cargado'
+          },
+          {
+            id: 6,
+            timestamp: new Date(Date.now() - 150000).toISOString(),
+            level: 'DEBUG',
+            message: 'Configuración de CORS aplicada'
+          },
+          {
+            id: 7,
+            timestamp: new Date(Date.now() - 180000).toISOString(),
+            level: 'INFO',
+            message: 'GET /api/products 200 (45ms)'
+          },
+          {
+            id: 8,
+            timestamp: new Date(Date.now() - 210000).toISOString(),
+            level: 'INFO',
+            message: 'Productos obtenidos: 20 (stock desde PRODUCTS)'
+          }
+        ];
+        setLogs(mockLogs);
+        if (!user) {
+          setError('⚠️ No estás autenticado. Inicia sesión para ver los logs reales del servidor.');
+        } else {
+          setError('⚠️ Error de autorización. Verifica tus permisos de acceso.');
+        }
+      } else {
+        setError('Error al cargar los logs del backend: ' + err.message);
+      }
     } finally {
       setLoading(false);
     }
-  }, [maxLogs, filterLevel]);
+  }, [maxLogs]);
 
   // Filtrar logs según criterios
   useEffect(() => {
     let filtered = [...logs];
-    
-    // Filtrar por nivel
-    if (filterLevel !== 'all') {
-      filtered = filtered.filter(log => 
-        log.level.toLowerCase() === filterLevel.toLowerCase()
-      );
-    }
     
     // Filtrar por búsqueda
     if (searchTerm.trim()) {
@@ -72,25 +129,24 @@ const BackendLogs = () => {
     }
     
     setFilteredLogs(filtered);
-  }, [logs, filterLevel, searchTerm]);
+  }, [logs, searchTerm]);
 
   // Auto scroll al final
   useEffect(() => {
-    if (autoScroll && logsContainerRef.current) {
+    if (logsContainerRef.current) {
       logsContainerRef.current.scrollTop = logsContainerRef.current.scrollHeight;
     }
-  }, [filteredLogs, autoScroll]);
+  }, [filteredLogs]);
 
-  // Inicializar streaming de logs
+    // Inicializar streaming de logs
   const startStreaming = useCallback(() => {
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
     }
 
     try {
-      // Usar la URL base del API para el EventSource
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-      const streamUrl = `${API_BASE_URL}/logs/stream`;
+      // Usar URL relativa para el EventSource
+      const streamUrl = '/api/logs/stream';
       
       console.log('Conectando a:', streamUrl);
       const eventSource = new EventSource(streamUrl);
@@ -107,9 +163,17 @@ const BackendLogs = () => {
           const data = JSON.parse(event.data);
           
           if (data.type === 'initial') {
-            setLogs(data.logs);
+            const cleanedLogs = data.logs.map(log => ({
+              ...log,
+              message: cleanLogMessage(log.message)
+            }));
+            setLogs(cleanedLogs);
           } else if (data.type === 'new') {
-            setLogs(prev => [data.log, ...prev].slice(0, maxLogs));
+            const cleanedLog = {
+              ...data.log,
+              message: cleanLogMessage(data.log.message)
+            };
+            setLogs(prev => [cleanedLog, ...prev].slice(0, maxLogs));
           }
         } catch (err) {
           console.error('Error parsing log data:', err);
@@ -119,7 +183,11 @@ const BackendLogs = () => {
       eventSource.onerror = (err) => {
         console.error('EventSource error:', err);
         setStreaming(false);
-        setError('Error en la conexión de streaming de logs');
+        if (err.type === 'error') {
+          setError('Error de autenticación. Streaming no disponible sin login.');
+        } else {
+          setError('Error en la conexión de streaming de logs');
+        }
         eventSource.close();
       };
       
@@ -141,7 +209,7 @@ const BackendLogs = () => {
   // Limpiar logs
   const clearLogs = async () => {
     try {
-      await apiService.post('/logs/clear');
+      await apiService.clearLogs();
       setLogs([]);
       console.log('🧹 Logs limpiados');
     } catch (err) {
@@ -153,11 +221,16 @@ const BackendLogs = () => {
   // Descargar logs
   const downloadLogs = async (format = 'json') => {
     try {
-      const response = await apiService.get(`/logs/download?format=${format}`, {
-        responseType: 'blob'
+      const response = await fetch(`/api/logs/download?format=${format}`, {
+        method: 'GET',
       });
       
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `backend-logs-${new Date().toISOString().slice(0, 10)}.${format}`);
@@ -169,6 +242,18 @@ const BackendLogs = () => {
       console.error('Error downloading logs:', err);
       setError('Error al descargar logs');
     }
+  };
+
+  // Limpiar códigos de escape ANSI de los logs
+  const cleanLogMessage = (message) => {
+    if (!message) return '';
+    
+    // Remover códigos de escape ANSI para colores
+    return message
+      .replace(/\x1b\[[0-9;]*m/g, '') // Códigos ANSI básicos
+      .replace(/\[\d+m/g, '') // Códigos de color más específicos
+      .replace(/\[90m|\[0m|\[34m|\[1m|\[36m|\[32m/g, '') // Códigos específicos que aparecen en los logs
+      .trim();
   };
 
   // Obtener icono y color según nivel de log
@@ -211,94 +296,23 @@ const BackendLogs = () => {
       {/* Controles */}
       <Card className="mb-3">
         <Card.Header>
-          <div className="d-flex justify-content-between align-items-center">
+          <div>
             <h5 className="mb-0">
               <FaTerminal className="me-2" />
               Logs del Backend
             </h5>
-            
-            <div className="d-flex gap-2">
-              {!streaming ? (
-                <Button 
-                  variant="outline-success" 
-                  size="sm" 
-                  onClick={startStreaming}
-                  style={{ 
-                    borderRadius: '8px',
-                    borderColor: '#28a745',
-                    color: '#28a745'
-                  }}
-                >
-                  <FaPlay className="me-1" />
-                  Iniciar Stream
-                </Button>
-              ) : (
-                <Button 
-                  variant="outline-warning" 
-                  size="sm" 
-                  onClick={stopStreaming}
-                  style={{ 
-                    borderRadius: '8px',
-                    borderColor: '#ffc107',
-                    color: '#856404'
-                  }}
-                >
-                  <FaPause className="me-1" />
-                  Pausar Stream
-                </Button>
-              )}
-              
-              <Button 
-                variant="outline-secondary" 
-                size="sm" 
-                onClick={clearLogs}
-                style={{ 
-                  borderRadius: '8px',
-                  borderColor: '#6c757d',
-                  color: '#6c757d'
-                }}
-              >
-                <FaTrash className="me-1" />
-                Limpiar
-              </Button>
-              
-              <Button 
-                variant="outline-primary" 
-                size="sm" 
-                onClick={() => downloadLogs('json')}
-                style={{ 
-                  borderRadius: '8px',
-                  borderColor: '#0d6efd',
-                  color: '#0d6efd'
-                }}
-              >
-                <FaDownload className="me-1" />
-                Descargar
-              </Button>
-            </div>
+            {user && (
+              <small className="text-muted">
+                <FaUser className="me-1" />
+                Conectado como: {user.email || 'Usuario autenticado'}
+              </small>
+            )}
           </div>
         </Card.Header>
         
         <Card.Body>
           <div className="row align-items-center">
-            <div className="col-md-3">
-              <Form.Group>
-                <Form.Label><FaFilter className="me-1" />Nivel</Form.Label>
-                <Form.Select 
-                  value={filterLevel} 
-                  onChange={(e) => setFilterLevel(e.target.value)}
-                  size="sm"
-                >
-                  <option value="all">Todos los niveles</option>
-                  <option value="error">Solo Errores</option>
-                  <option value="warning">Solo Warnings</option>
-                  <option value="info">Solo Info</option>
-                  <option value="debug">Solo Debug</option>
-                </Form.Select>
-              </Form.Group>
-            </div>
-            
-            <div className="col-md-4">
+            <div className="col-md-6">
               <Form.Group>
                 <Form.Label><FaSearch className="me-1" />Buscar</Form.Label>
                 <Form.Control
@@ -311,7 +325,7 @@ const BackendLogs = () => {
               </Form.Group>
             </div>
             
-            <div className="col-md-2">
+            <div className="col-md-3">
               <Form.Group>
                 <Form.Label>Máximo</Form.Label>
                 <Form.Select 
@@ -327,12 +341,6 @@ const BackendLogs = () => {
             </div>
             
             <div className="col-md-3">
-              <Form.Check 
-                type="switch"
-                label="Auto scroll"
-                checked={autoScroll}
-                onChange={(e) => setAutoScroll(e.target.checked)}
-              />
               <small className="text-muted">
                 {filteredLogs.length} de {logs.length} logs
               </small>
@@ -406,7 +414,7 @@ const BackendLogs = () => {
                             {log.level}
                           </Badge>
                           <span className="flex-grow-1" style={{ wordBreak: 'break-word' }}>
-                            {log.message}
+                            {cleanLogMessage(log.message)}
                           </span>
                         </div>
                       </div>

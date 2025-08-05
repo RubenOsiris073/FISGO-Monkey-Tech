@@ -24,6 +24,7 @@ const stripeRoutes = require('./routes/stripeRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const logsRoutes = require('./routes/logsRoutes');
+const imageRoutes = require('./routes/imageRoutes');
 
 // Importar servicios
 const googleSheetsService = require('./services/googleSheetsService');
@@ -78,9 +79,14 @@ apiRouter.use('/stripe', stripeRoutes);
 apiRouter.use('/cart', cartRoutes);
 apiRouter.use('/dashboard', dashboardRoutes);
 apiRouter.use('/logs', logsRoutes);
+apiRouter.use('/images', imageRoutes);
 
 // Montar el router principal en /api
 app.use('/api', apiRouter);
+
+// Servir archivos estáticos (imágenes de productos)
+app.use('/images', express.static(path.join(__dirname, 'public/images')));
+app.use('/static', express.static(path.join(__dirname, 'public')));
 
 // =========================================================
 // CONFIGURACIÓN DE PRODUCCIÓN

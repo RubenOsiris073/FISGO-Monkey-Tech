@@ -65,20 +65,7 @@ const NotificationsList = ({
                   <Col md={3} className="text-end">
                     <div className="notification-actions">
                       {getPriorityBadge(notification.priority)}
-                      {notification.actionUrl && (
-                        <Button 
-                          variant="outline-primary" 
-                          size="sm" 
-                          className="ms-2"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // Navegar a la URL de acción
-                            console.log('Navigate to:', notification.actionUrl);
-                          }}
-                        >
-                          Ver
-                        </Button>
-                      )}
+                      
                     </div>
                   </Col>
                 </Row>

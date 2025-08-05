@@ -18,10 +18,11 @@ const ProductCardModern = ({ product, onManage }) => {
   // Función para obtener la URL de la imagen o usar la imagen por defecto
   const getImageUrl = () => {
     if (product.imageUrl || product.imagenURL) {
+      // En desarrollo, usar URL relativa para aprovechar el proxy
       return product.imageUrl || product.imagenURL;
     }
-    // Usar la imagen por defecto del directorio public
-    return '/no-image.jpg';
+    // Usar la imagen por defecto del backend con URL relativa
+    return '/images/no-image.jpg';
   };
   
   return (
@@ -33,7 +34,7 @@ const ProductCardModern = ({ product, onManage }) => {
           src={getImageUrl()} 
           alt={product.nombre || 'Producto'} 
           className="product-card-image" 
-          onError={(e) => {e.target.src = '/no-image.jpg'}}
+          onError={(e) => {e.target.src = '/images/no-image.jpg'}}
         />
       </div>
       

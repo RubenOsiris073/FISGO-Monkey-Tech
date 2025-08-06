@@ -530,6 +530,26 @@ const ProductRegistrationForm = ({ detectionResult, onSubmit, loading }) => {
                       <FaEye className="me-2" />
                       Detección Automática
                     </Form.Label>
+                    
+                    {/* Imagen del producto detectado */}
+                    <div className="detection-image-container mb-3 text-center">
+                      <img 
+                        src={`https://psychic-bassoon-j65x4rxrvj4c5p54-5000.app.github.dev/images/products/${detectionResult.label}.png`}
+                        alt={detectionResult.label}
+                        className="detection-product-image"
+                        onError={(e) => {e.target.src = 'https://psychic-bassoon-j65x4rxrvj4c5p54-5000.app.github.dev/no-image.jpg'}}
+                        style={{
+                          width: '100px',
+                          height: '100px',
+                          objectFit: 'cover',
+                          borderRadius: '10px',
+                          border: '2px solid var(--accent-blue)',
+                          boxShadow: '0 3px 10px rgba(0, 123, 255, 0.2)'
+                        }}
+                      />
+                      <p className="small text-muted mt-1">Producto detectado</p>
+                    </div>
+                    
                     <div className="detection-badge-container">
                       <Badge bg="info" className="detection-badge">
                         <FaRobot className="me-1" />

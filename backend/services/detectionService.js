@@ -75,13 +75,14 @@ class DetectionService {
 
       const processingTime = Date.now() - startTime;
 
-      // Crear objeto de detección
+      // Crear objeto de detección con imagen correspondiente
       const detection = {
         label,
         similarity,
         timestamp: new Date().toISOString(),
         processingTime: processingTime,
-        fast: fast
+        fast: fast,
+        imageUrl: `https://psychic-bassoon-j65x4rxrvj4c5p54-5000.app.github.dev/images/products/${label}.png`
       };
 
       // Guardar en base de datos si la confianza es alta (solo para detecciones no rápidas para evitar spam)

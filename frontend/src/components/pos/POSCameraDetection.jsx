@@ -271,7 +271,8 @@ const POSCameraDetection = ({ onProductDetected, products, loading, minimal = fa
           similarity: result.detection.similarity,
           confidence: result.detection.confidence || result.detection.similarity,
           timestamp: new Date().toISOString(),
-          processingTime: result.detection.processingTime
+          processingTime: result.detection.processingTime,
+          imageUrl: `/products/${result.detection.label}.jpg`
         };
 
         setLastDetection(detection);

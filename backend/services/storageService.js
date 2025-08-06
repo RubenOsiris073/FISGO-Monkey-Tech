@@ -28,7 +28,8 @@ const getDetections = async (limitCount = 10) => {
       detections.push({
         id: doc.id,
         ...data,
-        timestamp: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString()
+        timestamp: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+        imageUrl: `https://psychic-bassoon-j65x4rxrvj4c5p54-5000.app.github.dev/images/products/${data.label}.png`
       });
     });
     

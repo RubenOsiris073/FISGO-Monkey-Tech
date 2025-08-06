@@ -17,12 +17,82 @@ import {
 const ProductCardModern = ({ product, onManage, onEdit }) => {
   // Función para obtener la URL de la imagen o usar la imagen por defecto
   const getImageUrl = () => {
+    console.log('DEBUG ProductCardModern - product:', product);
+    
+    // 1. Si ya tiene una URL de imagen completa, usarla
     if (product.imageUrl || product.imagenURL) {
-      // En desarrollo, usar URL relativa para aprovechar el proxy
-      return product.imageUrl || product.imagenURL;
+      const imageUrl = product.imageUrl || product.imagenURL;
+      console.log('DEBUG - usando imageUrl existente:', imageUrl);
+      if (imageUrl.startsWith('http')) {
+        return imageUrl;
+      }
+      // Si es una ruta relativa, construir la URL completa
+      return `https://psychic-bassoon-j65x4rxrvj4c5p54-5000.app.github.dev${imageUrl}`;
     }
-    // Usar la imagen por defecto del backend con URL relativa
-    return '/images/no-image.jpg';
+    
+    // 2. Si el producto fue detectado por IA, usar el label
+    if (product.label || product.tipoDetectado) {
+      const label = product.label || product.tipoDetectado;
+      
+      // Mapear labels en minúsculas a nombres correctos de archivos
+      const labelToFile = {
+        'dr.peppe_335ml': 'Dr.Peppe_335ML',
+        'pop_45g': 'Pop_45G',
+        'trident_13g': 'Trident_13G',
+        'botella_ciel_100ml': 'Botella_Ciel_100ML',
+        'cacahuates_kiyakis_120g': 'Cacahuates_Kiyakis_120G',
+        'del valle_413ml': 'Del Valle_413ML',
+        'sabritas_150g': 'Sabritas_150G',
+        'takis_70g': 'Takis_70G'
+      };
+      
+      const correctFileName = labelToFile[label.toLowerCase()] || label;
+      const url = `https://psychic-bassoon-j65x4rxrvj4c5p54-5000.app.github.dev/images/products/${correctFileName}.png`;
+      console.log('DEBUG - usando label:', label, 'archivo correcto:', correctFileName, 'URL:', url);
+      return url;
+    }
+    
+    // 3. Si tiene código de producto, intentar usar el código como nombre de imagen
+    if (product.codigo) {
+      const url = `https://psychic-bassoon-j65x4rxrvj4c5p54-5000.app.github.dev/images/products/${product.codigo}.png`;
+      console.log('DEBUG - usando codigo:', product.codigo, 'URL:', url);
+      return url;
+    }
+    
+    // 4. Si el producto fue detectado automáticamente, intentar mapear el nombre al label correcto
+    if (product.tipoDetectado || (product.nombre && ['Dr.Pepper_335ML', 'Pop_45G', 'Trident_13G', 'Botella_Ciel_100ML', 'Cacahuates_Kiyakis_120G', 'Del Valle_413ML', 'Sabritas_150G', 'Takis_70G'].includes(product.nombre))) {
+      // Mapear nombres comunes a labels del modelo
+      const nameToLabel = {
+        'Dr.Pepper_335ML': 'Dr.Peppe_335ML',
+        'Dr.Peppe_335ML': 'Dr.Peppe_335ML',
+        'Pop_45G': 'Pop_45G',
+        'Trident_13G': 'Trident_13G',
+        'Botella_Ciel_100ML': 'Botella_Ciel_100ML',
+        'Cacahuates_Kiyakis_120G': 'Cacahuates_Kiyakis_120G',
+        'Del Valle_413ML': 'Del Valle_413ML',
+        'Sabritas_150G': 'Sabritas_150G',
+        'Takis_70G': 'Takis_70G'
+      };
+      
+      const mappedLabel = nameToLabel[product.nombre] || product.tipoDetectado;
+      if (mappedLabel) {
+        const url = `https://psychic-bassoon-j65x4rxrvj4c5p54-5000.app.github.dev/images/products/${mappedLabel}.png`;
+        console.log('DEBUG - usando mapeo de nombre a label:', product.nombre, '->', mappedLabel, 'URL:', url);
+        return url;
+      }
+    }
+    
+    // 5. Si tiene nombre, intentar con el nombre exacto
+    if (product.nombre) {
+      const url = `https://psychic-bassoon-j65x4rxrvj4c5p54-5000.app.github.dev/images/products/${product.nombre}.png`;
+      console.log('DEBUG - usando nombre exacto:', product.nombre, 'URL:', url);
+      return url;
+    }
+    
+    // 6. Imagen por defecto
+    const defaultUrl = 'https://psychic-bassoon-j65x4rxrvj4c5p54-5000.app.github.dev/images/no-image.jpg';
+    console.log('DEBUG - usando imagen por defecto:', defaultUrl);
+    return defaultUrl;
   };
   
   return (
@@ -34,7 +104,7 @@ const ProductCardModern = ({ product, onManage, onEdit }) => {
           src={getImageUrl()} 
           alt={product.nombre || 'Producto'} 
           className="product-card-image" 
-          onError={(e) => {e.target.src = '/images/no-image.jpg'}}
+          onError={(e) => {e.target.src = 'https://psychic-bassoon-j65x4rxrvj4c5p54-5000.app.github.dev/images/no-image.jpg'}}
         />
       </div>
       

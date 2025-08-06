@@ -77,20 +77,18 @@ const CameraDetectionComponent = ({ onDetectionResult, onError, loading }) => {
       console.log('Detection result:', result);
 
       if (result.success && result.detection) {
-        const detection = {
-          label: result.detection.label,
-          similarity: result.detection.similarity,
-          confidence: result.detection.confidence || result.detection.similarity,
-          timestamp: new Date().toISOString()
+        const detectionWithImage = {
+          ...result.detection,
+          imageUrl: `https://psychic-bassoon-j65x4rxrvj4c5p54-5000.app.github.dev/images/products/${result.detection.label}.png`
         };
-
-        setLastDetection(detection);
+        
+        setLastDetection(detectionWithImage);
 
         // Check if detection confidence is high enough
-        if (detection.similarity >= 70) {
-          onDetectionResult?.(detection);
+        if (detectionWithImage.similarity >= 70) {
+          onDetectionResult?.(detectionWithImage);
         } else {
-          setWebcamError(`Detección poco confiable (${detection.similarity}%). Intente de nuevo con mejor iluminación.`);
+          setWebcamError(`Detección poco confiable (${detectionWithImage.similarity}%). Intente de nuevo con mejor iluminación.`);
         }
       } else {
         setWebcamError('No se pudo detectar ningún producto. Intente de nuevo.');
@@ -192,17 +190,36 @@ const CameraDetectionComponent = ({ onDetectionResult, onError, loading }) => {
                     <small>Última Detección</small>
                   </Card.Header>
                   <Card.Body>
-                    <p className="mb-1">
-                      <strong>Producto:</strong> {lastDetection.label}
-                    </p>
-                    <p className="mb-1">
-                      <strong>Confianza:</strong> {lastDetection.similarity}%
-                    </p>
-                    <p className="mb-0">
-                      <small className="text-muted">
-                        {new Date(lastDetection.timestamp).toLocaleTimeString()}
-                      </small>
-                    </p>
+                    <div className="d-flex align-items-center gap-3">
+                      {/* Imagen del producto detectado */}
+                      <div className="detection-image-mini">
+                        <img 
+                          src={`https://psychic-bassoon-j65x4rxrvj4c5p54-5000.app.github.dev/images/products/${lastDetection.label}.png`}
+                          alt={lastDetection.label}
+                          onError={(e) => {e.target.src = 'https://psychic-bassoon-j65x4rxrvj4c5p54-5000.app.github.dev/no-image.jpg'}}
+                          style={{
+                            width: '60px',
+                            height: '60px',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            border: '1px solid #dee2e6'
+                          }}
+                        />
+                      </div>
+                      <div className="flex-grow-1">
+                        <p className="mb-1">
+                          <strong>Producto:</strong> {lastDetection.label}
+                        </p>
+                        <p className="mb-1">
+                          <strong>Confianza:</strong> {lastDetection.similarity}%
+                        </p>
+                        <p className="mb-0">
+                          <small className="text-muted">
+                            {new Date(lastDetection.timestamp).toLocaleTimeString()}
+                          </small>
+                        </p>
+                      </div>
+                    </div>
                   </Card.Body>
                 </Card>
               )}

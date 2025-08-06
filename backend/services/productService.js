@@ -25,33 +25,16 @@ async function getAllProducts() {
       return [];
     }
     
-    // Asegurar stock inicial para productos sin cantidad definida
-    const productsWithStock = await Promise.all(products.map(async (product) => {
-      let cantidad = product.cantidad;
-      
-      // Si no tiene cantidad definida, inicializar con stock aleatorio
-      if (cantidad === undefined || cantidad === null) {
-        cantidad = Math.floor(Math.random() * 50) + 10; // Stock entre 10-60
-        
-        // Actualizar en Firebase
-        try {
-          await firestore.collection(COLLECTIONS.PRODUCTS).doc(product.id).update({ 
-            cantidad,
-            stock: cantidad, // Mantener compatibilidad
-            stockInitialized: true
-          });
-          Logger.info(`Stock inicializado para ${product.nombre}: ${cantidad}`);
-        } catch (error) {
-          Logger.error(`Error inicializando stock para ${product.id}:`, error);
-        }
-      }
+    // Asegurar que todos los productos tengan un campo cantidad válido
+    const productsWithStock = products.map(product => {
+      const cantidad = product.cantidad || 0;
       
       return {
         ...product,
-        cantidad: cantidad || 0,
-        stock: cantidad || 0 // Mantener compatibilidad con frontend
+        cantidad: cantidad,
+        stock: cantidad // Mantener compatibilidad con frontend
       };
-    }));
+    });
     
     Logger.info(`Productos obtenidos: ${productsWithStock.length} (stock desde PRODUCTS)`);
     
@@ -172,22 +155,26 @@ async function searchProducts(term) {
  */
 async function createProduct(productData) {
   try {
-    const { nombre, precio, categoria, label } = productData;
+    Logger.info('Creando producto en productService:', JSON.stringify(productData, null, 2));
+    
+    const { nombre, precio } = productData;
     
     if (!nombre || !precio) {
       throw new Error("Nombre y precio son requeridos");
     }
     
     const newProduct = {
-      nombre,
+      ...productData, // Guardar todos los campos del producto
       precio: parseFloat(precio),
-      categoria: categoria || "",
-      label: label || nombre.toLowerCase(),
-      createdAt: firestore.serverTimestamp(),
-      updatedAt: firestore.serverTimestamp()
+      cantidad: parseInt(productData.cantidad) || 1, // Asegurar que cantidad sea un número
+      label: productData.label || nombre.toLowerCase().replace(/\s+/g, '_'),
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
     
-    const docRef = await firestore.addDoc(COLLECTIONS.PRODUCTS, newProduct);
+    const docRef = await firestore.collection(COLLECTIONS.PRODUCTS).add(newProduct);
+    
+    Logger.info('Producto guardado exitosamente:', { id: docRef.id, data: newProduct });
     
     return { 
       id: docRef.id,

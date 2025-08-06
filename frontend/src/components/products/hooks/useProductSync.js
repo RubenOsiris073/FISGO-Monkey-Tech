@@ -101,15 +101,25 @@ const useProductSync = (initialProducts = []) => {
     );
   }, []);
 
-  // Listener para eventos de stock actualizado
+  // Listener para eventos de stock actualizado y productos creados
   useEffect(() => {
     const handleStockUpdated = (event) => {
       console.log('[useProductSync] Evento stock-updated recibido:', event.detail);
       refreshProducts();
     };
 
+    const handleProductCreated = (event) => {
+      console.log('[useProductSync] Evento product-created recibido:', event.detail);
+      refreshProducts(true); // Force refresh para productos nuevos
+    };
+
     window.addEventListener('stock-updated', handleStockUpdated);
-    return () => window.removeEventListener('stock-updated', handleStockUpdated);
+    window.addEventListener('product-created', handleProductCreated);
+    
+    return () => {
+      window.removeEventListener('stock-updated', handleStockUpdated);
+      window.removeEventListener('product-created', handleProductCreated);
+    };
   }, [refreshProducts]);
 
   // Actualizar productos cuando cambien los props iniciales

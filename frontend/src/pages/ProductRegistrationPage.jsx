@@ -153,7 +153,7 @@ const ProductRegistrationPage = () => {
         ...productData,
         detectionId: detectionResult.label,
         precisionDeteccion: detectionResult.similarity,
-        cantidad: productData.initialQuantity || 0,
+        cantidad: productData.cantidad || 1,
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -161,7 +161,20 @@ const ProductRegistrationPage = () => {
       const response = await apiService.createProduct(newProduct);
 
       if (response.success || response.id) {
-        setSuccess(`Producto creado exitosamente: ${productData.nombre} con ${productData.initialQuantity} unidades`);
+        setSuccess(`Producto creado exitosamente: ${productData.nombre} con ${productData.cantidad || 1} unidades`);
+        
+        // Invalidar cache para actualizar lista de productos
+        setCachedProducts(null);
+        setCacheTimestamp(null);
+        
+        // Emitir evento para actualizar otros componentes
+        window.dispatchEvent(new CustomEvent('product-created', { 
+          detail: { 
+            product: response.product || newProduct,
+            productId: response.id 
+          } 
+        }));
+        
         // Ask if user wants to register another product
         setTimeout(() => {
           const continueRegistration = window.confirm('¿Desea registrar otro producto?');

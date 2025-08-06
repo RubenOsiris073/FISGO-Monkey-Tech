@@ -60,6 +60,7 @@ router.post('/', verifyToken, async (req, res) => {
     const productData = req.body;
     
     Logger.info('Creando nuevo producto:', productData.nombre);
+    Logger.info('Datos recibidos - cantidad:', productData.cantidad, 'tipo:', typeof productData.cantidad);
     
     // Validar datos requeridos
     if (!productData.nombre || !productData.categoria || !productData.precio) {
@@ -76,8 +77,8 @@ router.post('/', verifyToken, async (req, res) => {
       updatedAt: new Date(),
       activo: true,
       stockInitialized: true,
-      // Si viene con initialQuantity, usar esa cantidad como stock inicial
-      cantidad: productData.initialQuantity || productData.cantidad || 0
+      // Usar siempre la cantidad especificada, con valor por defecto de 1
+      cantidad: parseInt(productData.cantidad) || 1
     };
 
     // Crear producto usando el servicio

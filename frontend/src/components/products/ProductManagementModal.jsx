@@ -93,6 +93,16 @@ const ProductManagementModal = ({
       setLoading(true);
       setError(null);
 
+      // Verificar autenticación antes de intentar eliminar
+      const { getAuth } = await import('firebase/auth');
+      const auth = getAuth();
+      
+      if (!auth.currentUser) {
+        setError('Debe estar autenticado para eliminar productos');
+        return;
+      }
+
+      console.log('Eliminando producto con ID:', product.id);
       const response = await apiService.deleteProduct(product.id);
 
       if (response.success) {
@@ -108,7 +118,15 @@ const ProductManagementModal = ({
       }
     } catch (error) {
       console.error('Error eliminando producto:', error);
-      setError(error.message || 'Error al eliminar producto');
+      
+      // Manejo específico de errores de autenticación
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        setError('No tiene permisos para eliminar este producto. Inicie sesión nuevamente.');
+      } else if (error.response?.status === 404) {
+        setError('El producto no existe o ya fue eliminado.');
+      } else {
+        setError(error.message || 'Error al eliminar producto');
+      }
     } finally {
       setLoading(false);
     }

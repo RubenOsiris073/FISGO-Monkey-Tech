@@ -55,11 +55,14 @@ api.interceptors.request.use(
           
           if (import.meta.env.DEV) {
             console.log('Token de autenticación agregado correctamente');
+            console.log('Usuario:', auth.currentUser.email);
           }
         } else {
           if (import.meta.env.DEV) {
             console.log('No hay usuario autenticado - sin token');
           }
+          // Para rutas protegidas sin usuario, devolver error
+          throw new Error('Usuario no autenticado');
         }
       } else {
         if (import.meta.env.DEV) {
@@ -219,6 +222,16 @@ const apiService = {
   deleteProduct: async (productId) => {
     try {
       console.log(`Eliminando producto: ${productId}`);
+      
+      // Debug: verificar autenticación
+      const { getAuth } = await import('firebase/auth');
+      const auth = getAuth();
+      console.log('Usuario autenticado:', auth.currentUser ? 'Sí' : 'No');
+      if (auth.currentUser) {
+        console.log('Usuario ID:', auth.currentUser.uid);
+        console.log('Usuario email:', auth.currentUser.email);
+      }
+      
       const response = await api.delete(`/products/${productId}`);
       
       // Invalidar caché de productos
@@ -228,6 +241,8 @@ const apiService = {
       return response.data;
     } catch (error) {
       console.error('Error eliminando producto:', error);
+      console.error('Status:', error.response?.status);
+      console.error('Data:', error.response?.data);
       throw error;
     }
   },

@@ -304,14 +304,6 @@ const ProductRegistrationForm = ({ detectionResult, onSubmit, loading }) => {
                       placeholder="PRD-001"
                       className="form-control-modern"
                     />
-                    <Button 
-                      variant="outline-secondary" 
-                      onClick={generateCode}
-                      type="button"
-                      title="Generar código automático"
-                    >
-                      <FaSync />
-                    </Button>
                   </InputGroup>
                   <Form.Text className="text-muted">
                     <FaInfoCircle className="me-1" />
@@ -490,14 +482,6 @@ const ProductRegistrationForm = ({ detectionResult, onSubmit, loading }) => {
                       placeholder="Ej: 20250715-AB12"
                       className="form-control-modern"
                     />
-                    <Button 
-                      variant="outline-secondary" 
-                      onClick={generateBatchNumber}
-                      type="button"
-                      title="Generar número de lote automático"
-                    >
-                      <FaSync />
-                    </Button>
                   </InputGroup>
                   <Form.Text className="text-muted">
                     <FaInfoCircle className="me-1" />

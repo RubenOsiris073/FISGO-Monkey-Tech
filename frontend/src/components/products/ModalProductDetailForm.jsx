@@ -8,7 +8,7 @@ import {
 } from 'react-icons/fa';
 import { saveProductDetails } from '../../services/storageService';
 
-const ProductDetailForm = ({ initialProduct = null, onSuccess, onCancel, show = true, mode = 'create' }) => {
+const ModalProductDetailForm = ({ initialProduct = null, onSuccess, onProductSaved, onCancel, show = false, mode = 'create' }) => {
   const defaultFormData = {
     nombre: '',
     cantidad: 1,
@@ -23,15 +23,23 @@ const ProductDetailForm = ({ initialProduct = null, onSuccess, onCancel, show = 
     unidadMedida: 'unidad'
   };
 
-  const [formData, setFormData] = useState({
-    ...defaultFormData,
-    ...initialProduct,
-    nombre: initialProduct?.label || initialProduct?.nombre || '',
-    perecedero: false,
-    marca: '',
-    subcategoria: '',
-    descripcion: '',
-    batchNumber: ''
+  const [formData, setFormData] = useState(() => {
+    const baseData = {
+      ...defaultFormData,
+      nombre: initialProduct?.label || initialProduct?.nombre || '',
+      perecedero: initialProduct?.perecedero || false,
+      marca: initialProduct?.marca || '',
+      subcategoria: initialProduct?.subcategoria || '',
+      descripcion: initialProduct?.descripcion || '',
+      batchNumber: initialProduct?.batchNumber || ''
+    };
+    
+    // Si hay producto inicial, usar sus datos
+    if (initialProduct && Object.keys(initialProduct).length > 0) {
+      return { ...baseData, ...initialProduct };
+    }
+    
+    return baseData;
   });
   
   const [saving, setSaving] = useState(false);
@@ -87,8 +95,12 @@ const ProductDetailForm = ({ initialProduct = null, onSuccess, onCancel, show = 
       };
       await saveProductDetails(productToSave);
       
+      // Call both callbacks if available
       if (onSuccess) {
         onSuccess();
+      }
+      if (onProductSaved) {
+        onProductSaved(productToSave);
       }
     } catch (err) {
       console.error("Error al guardar el producto:", err);
@@ -99,6 +111,7 @@ const ProductDetailForm = ({ initialProduct = null, onSuccess, onCancel, show = 
   };
 
   const handleCancel = () => {
+    console.log('handleCancel called', { onCancel, typeof: typeof onCancel });
     if (onCancel && typeof onCancel === 'function') {
       onCancel();
     }
@@ -117,11 +130,11 @@ const ProductDetailForm = ({ initialProduct = null, onSuccess, onCancel, show = 
       <Modal 
         show={show} 
         onHide={handleCancel}
-        size="lg"
+        size="xl"
         centered
         backdrop="static"
-        keyboard={true}
-        className="product-detail-modal"
+        keyboard={false}
+        enforceFocus={false}
       >
         <Modal.Header closeButton>
           <Modal.Title>
@@ -148,7 +161,7 @@ const ProductDetailForm = ({ initialProduct = null, onSuccess, onCancel, show = 
                 Información Básica del Producto
               </h5>
             </Card.Header>
-            <Card.Body className="p-3">
+            <Card.Body className="p-4">
               <Row>
                 <Col md={8}>
                   <Form.Group className="mb-3">
@@ -184,7 +197,7 @@ const ProductDetailForm = ({ initialProduct = null, onSuccess, onCancel, show = 
                       placeholder="PRD-001"
                       className="form-control-modern"
                     />
-                    <Form.Text className="text-muted small">
+                    <Form.Text className="text-muted">
                       <FaInfoCircle className="me-1" />
                       Código único para identificar el producto
                     </Form.Text>
@@ -309,7 +322,7 @@ const ProductDetailForm = ({ initialProduct = null, onSuccess, onCancel, show = 
                 Inventario y Stock
               </h5>
             </Card.Header>
-            <Card.Body className="p-3">
+            <Card.Body className="p-4">
               <Row>
                 <Col md={4}>
                   <Form.Group className="mb-3">
@@ -370,7 +383,7 @@ const ProductDetailForm = ({ initialProduct = null, onSuccess, onCancel, show = 
                       onChange={handleInputChange}
                       className="form-control-modern"
                     />
-                    <Form.Text className="text-muted small">
+                    <Form.Text className="text-muted">
                       <FaInfoCircle className="me-1" />
                       Alerta cuando el stock sea menor a este valor
                     </Form.Text>
@@ -417,7 +430,7 @@ const ProductDetailForm = ({ initialProduct = null, onSuccess, onCancel, show = 
                     <Form.Control.Feedback type="invalid">
                       La fecha de caducidad es requerida para productos perecederos
                     </Form.Control.Feedback>
-                    <Form.Text className="text-muted small">
+                    <Form.Text className="text-muted">
                       <FaInfoCircle className="me-1" />
                       {formData.perecedero ? 'Requerida para productos perecederos' : 'Opcional - Solo para productos perecederos'}
                     </Form.Text>
@@ -482,9 +495,9 @@ const ProductDetailForm = ({ initialProduct = null, onSuccess, onCancel, show = 
                 Información Adicional
               </h5>
             </Card.Header>
-            <Card.Body className="p-3">
+            <Card.Body className="p-4">
               {initialProduct?.label && (
-                <div className="detection-info-card mb-3">
+                <div className="detection-info-card mb-4">
                   <Form.Label className="form-label-modern">
                     <FaEye className="me-2" />
                     Detección Automática
@@ -511,13 +524,13 @@ const ProductDetailForm = ({ initialProduct = null, onSuccess, onCancel, show = 
                 <Form.Control
                   as="textarea"
                   name="notas"
-                  rows={3}
+                  rows={4}
                   value={formData.notas}
                   onChange={handleInputChange}
                   placeholder="Información adicional sobre el producto: características especiales, instrucciones de manejo, etc..."
                   className="form-control-modern"
                 />
-                <Form.Text className="text-muted small">
+                <Form.Text className="text-muted">
                   <FaInfoCircle className="me-1" />
                   Cualquier información relevante sobre el producto
                 </Form.Text>
@@ -584,184 +597,195 @@ const ProductDetailForm = ({ initialProduct = null, onSuccess, onCancel, show = 
       </Modal>
 
       <style>{`
-          .product-detail-modal .modal-dialog {
-            max-width: 900px;
-            margin: 1rem auto;
-          }
-
-          .product-detail-modal .modal-content {
-            border-radius: 16px;
-            border: none;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-            overflow: hidden;
-          }
-
-          .product-detail-modal .modal-header {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-bottom: 1px solid #dee2e6;
-            padding: 1.25rem 1.5rem;
-          }
-
-          .product-detail-modal .modal-title {
-            font-weight: 700;
-            font-size: 1.35rem;
-            color: #495057;
-            display: flex;
-            align-items: center;
-          }
-
-          .product-detail-modal .modal-title svg {
-            font-size: 1.2rem;
-            color: #007bff;
-          }
-
-          .product-detail-modal .modal-body {
-            max-height: 75vh;
-            overflow-y: auto;
-            padding: 0;
-          }
-
           .modern-form-container {
-            padding: 1.25rem;
+            max-width: 100%;
+            margin: 0;
+            padding: 1rem;
           }
 
           .form-section-card {
             border: none;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
             overflow: hidden;
-            margin-bottom: 1.25rem;
-            background: #ffffff;
+            transition: all 0.3s ease;
+            background: var(--card-bg);
+            margin-bottom: 1rem;
+          }
+
+          .form-section-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
           }
 
           .form-section-header {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-bottom: 1px solid #dee2e6;
-            padding: 0.875rem 1.25rem;
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 1.5rem;
           }
 
           .form-section-header h5 {
-            color: #495057;
+            color: var(--text-primary);
             font-weight: 600;
             margin: 0;
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-          }
-
-          .form-section-header h5 svg {
-            font-size: 1rem;
-            opacity: 0.8;
           }
 
           .form-label-modern {
             font-weight: 600;
-            color: #495057;
+            color: var(--text-primary);
             margin-bottom: 0.5rem;
             display: flex;
             align-items: center;
-            font-size: 0.9rem;
-          }
-
-          .form-label-modern svg {
-            font-size: 0.85rem;
-            opacity: 0.7;
           }
 
           .form-control-modern {
-            border-radius: 8px;
-            border: 1px solid #ced4da;
-            padding: 0.625rem 0.875rem;
-            font-size: 0.9rem;
-            transition: all 0.2s ease;
-            background: #ffffff;
-            color: #495057;
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: var(--input-bg);
+            color: var(--text-primary);
           }
 
           .form-control-modern:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 0 0.15rem rgba(0, 123, 255, 0.1);
-            background: #ffffff;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+            background: var(--input-bg);
+            color: var(--text-primary);
           }
 
           .input-addon-modern {
-            background: #f8f9fa;
-            border: 1px solid #ced4da;
-            color: #6c757d;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            color: var(--text-secondary);
             font-weight: 600;
-            font-size: 0.9rem;
           }
 
           .currency-symbol {
-            background: #f8f9fa;
-            border: 1px solid #ced4da;
-            color: #6c757d;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            color: var(--text-secondary);
             font-weight: 600;
-            padding: 0.625rem 0.875rem;
-            border-top-left-radius: 8px;
-            border-bottom-left-radius: 8px;
-            font-size: 0.9rem;
+            padding: 0.75rem 1rem;
+            border-top-left-radius: 12px;
+            border-bottom-left-radius: 12px;
           }
 
           .detection-info-card {
-            background: linear-gradient(135deg, rgba(13, 202, 240, 0.08), rgba(13, 202, 240, 0.03));
-            padding: 0.875rem;
-            border-radius: 8px;
-            border: 1px solid rgba(13, 202, 240, 0.15);
+            background: linear-gradient(135deg, rgba(13, 202, 240, 0.1), rgba(13, 202, 240, 0.05));
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid rgba(13, 202, 240, 0.2);
           }
 
           .detection-badge {
-            font-size: 0.8rem;
-            padding: 0.4rem 0.6rem;
-            border-radius: 6px;
+            font-size: 0.85rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
           }
 
           .submit-button-modern {
             background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
             border: none;
-            border-radius: 8px;
-            padding: 0.75rem 1.5rem;
+            border-radius: 16px;
+            padding: 1rem 2rem;
             font-weight: 600;
-            font-size: 0.95rem;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.25);
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
           }
 
           .submit-button-modern:hover:not(:disabled) {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.35);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+            background: linear-gradient(135deg, #20c997 0%, #28a745 100%);
           }
 
           .submit-button-modern:disabled {
-            background: #6c757d;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
             box-shadow: none;
           }
 
           .form-submit-container {
-            margin-top: 1.5rem;
-            padding: 1.25rem;
-            background: #f8f9fa;
-            border-radius: 12px;
-            border: 1px solid #dee2e6;
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
           }
 
           .form-help-text {
-            background: rgba(108, 117, 125, 0.08);
-            padding: 0.625rem;
-            border-radius: 6px;
-            border: 1px solid rgba(108, 117, 125, 0.15);
+            background: rgba(108, 117, 125, 0.1);
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid rgba(108, 117, 125, 0.2);
           }
 
           .modern-alert {
             border: none;
-            border-radius: 8px;
-            padding: 0.875rem 1rem;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
             font-weight: 500;
-            margin: 1rem 1.25rem;
+          }
+
+          .btn-close-custom {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            border: none;
+            background: none;
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            padding: 0.5rem;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+          }
+
+          .btn-close-custom:hover {
+            background: rgba(255, 0, 0, 0.1);
+            color: #dc3545;
+            transform: scale(1.1);
+          }
+
+          .modal-dialog {
+            max-width: 95vw;
+          }
+
+          .modal-content {
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+          }
+
+          .modal-header {
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            border-bottom: 2px solid var(--border-color);
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            padding: 1.5rem;
+          }
+
+          .modal-title {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+          }
+
+          .modal-body {
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 0;
           }
         `}</style>
     </>
   );
 };
 
-export default ProductDetailForm;
+export default ModalProductDetailForm;

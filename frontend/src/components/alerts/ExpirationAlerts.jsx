@@ -435,9 +435,6 @@ const ExpirationAlerts = () => {
         </Modal.Body>
         <Modal.Footer>
           
-          <Button variant="secondary" onClick={() => setShowModal(false)}>
-            Cerrar
-          </Button>
         </Modal.Footer>
       </Modal>
     </div>

@@ -214,14 +214,6 @@ const Navigation = ({ onSidebarToggle }) => {
             {!collapsed && <span>Alertas</span>}
           </Nav.Link>
           
-          <Nav.Link 
-            as={Link} 
-            to="/camera" 
-            className={`sidebar-menu-item ${isActive('/camera') ? 'active' : ''}`}
-          >
-            <FaCog className="sidebar-icon" />
-            {!collapsed && <span>Cámara</span>}
-          </Nav.Link>
         </div>
 
         {/* Sección Manage Dish (según imagen POSLINE) */}

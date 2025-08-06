@@ -10,6 +10,7 @@ import useProductFilters from './hooks/useProductFilters';
 // Componentes modulares
 import ProductCardModern from './components/ProductCardModern';
 import ProductManagementModal from './ProductManagementModal';
+import ModalProductDetailForm from './ModalProductDetailForm';
 
 // Utilidades
 import { getCategoryIcon, formatCategoryTitle } from './utils/categoryUtils';
@@ -20,6 +21,10 @@ const ProductGrid = ({ products = [], loading, onProductDeleted }) => {
   // Estados para el modal de gestión
   const [showManagementModal, setShowManagementModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  
+  // Estados para el modal de edición
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
 
   // Hook para sincronización de productos con cache optimizado
   const {
@@ -43,9 +48,23 @@ const ProductGrid = ({ products = [], loading, onProductDeleted }) => {
     setShowManagementModal(true);
   };
 
+  // Función para manejar la edición de un producto
+  const handleEditProduct = (product) => {
+    setEditingProduct(product);
+    setShowEditModal(true);
+  };
+
   // Función para manejar la actualización de un producto
   const handleProductUpdated = (updatedProduct) => {
     updateProduct(updatedProduct);
+    setShowEditModal(false);
+    setEditingProduct(null);
+  };
+
+  // Función para cancelar la edición
+  const handleCancelEdit = () => {
+    setShowEditModal(false);
+    setEditingProduct(null);
   };
 
   // Función para manejar la eliminación de un producto
@@ -146,6 +165,7 @@ const ProductGrid = ({ products = [], loading, onProductDeleted }) => {
                     <ProductCardModern 
                       product={product} 
                       onManage={handleManageProduct}
+                      onEdit={handleEditProduct}
                     />
                   </Col>
                 ))}
@@ -210,6 +230,15 @@ const ProductGrid = ({ products = [], loading, onProductDeleted }) => {
         product={selectedProduct}
         onProductUpdated={handleProductUpdated}
         onProductDeleted={handleProductDeleted}
+      />
+
+      {/* Modal de edición de productos */}
+      <ModalProductDetailForm
+        show={showEditModal}
+        onCancel={handleCancelEdit}
+        initialProduct={editingProduct}
+        mode="edit"
+        onProductSaved={handleProductUpdated}
       />
     </div>
   );

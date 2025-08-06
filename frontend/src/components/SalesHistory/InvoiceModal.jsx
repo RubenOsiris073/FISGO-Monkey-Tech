@@ -165,24 +165,7 @@ const InvoiceModal = ({ show, onHide, sale }) => {
       
       <Modal.Footer className="d-flex justify-content-center align-items-center">
         {/* Botón principal mejorado */}
-        <Button 
-          variant="primary" 
-          size="sm"
-          onClick={handleDownloadInvoice}
-          disabled={downloading}
-          title="Descargar PDF profesional"
-          className="px-2 py-1"
-        >
-          {downloading ? (
-            <>
-              <Spinner animation="border" size="sm" className="me-1" /> Generando...
-            </>
-          ) : (
-            <>
-              <FaDownload className="me-1" /> PDF
-            </>
-          )}
-        </Button>
+        
       </Modal.Footer>
     </Modal>
   );

@@ -38,9 +38,7 @@ const ClientNameModal = ({ show, onHide, onConfirm, loading }) => {
           </Form.Group>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleHide} disabled={loading}>
-            Cancelar
-          </Button>
+          
           <Button 
             variant="primary" 
             type="submit" 

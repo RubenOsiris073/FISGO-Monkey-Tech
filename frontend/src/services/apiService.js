@@ -41,7 +41,7 @@ api.interceptors.request.use(
   async (config) => {
     try {
       // Rutas que NO requieren autenticación
-      const publicRoutes = ['/dashboard', '/health', '/status'];
+      const publicRoutes = ['/dashboard', '/health', '/status', '/detection/detect', '/detection/recent', '/detection/status'];
       const isPublicRoute = publicRoutes.some(route => config.url?.includes(route));
       
       if (!isPublicRoute) {

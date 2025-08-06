@@ -14,7 +14,7 @@ import {
   FaEye
 } from 'react-icons/fa';
 
-const ProductCardModern = ({ product, onManage }) => {
+const ProductCardModern = ({ product, onManage, onEdit }) => {
   // Función para obtener la URL de la imagen o usar la imagen por defecto
   const getImageUrl = () => {
     if (product.imageUrl || product.imagenURL) {
@@ -127,16 +127,15 @@ const ProductCardModern = ({ product, onManage }) => {
         {/* Botones de acción para gestionar el producto */}
         <div className="mt-auto pt-2">
           <div className="d-flex flex-column gap-2">
-            <Link to={`/products/edit/${product.id}`} state={{ product }} className="text-decoration-none">
-              <Button 
-                className="btn-edit-modern product-action-btn w-100"
-                variant="primary"
-                size="sm"
-              >
-                <FaEdit className="me-1" />
-                {product.nombre ? 'Editar' : 'Completar'}
-              </Button>
-            </Link>
+            <Button 
+              className="btn-edit-modern product-action-btn w-100"
+              variant="primary"
+              size="sm"
+              onClick={() => onEdit ? onEdit(product) : onManage(product)}
+            >
+              <FaEdit className="me-1" />
+              {product.nombre ? 'Editar' : 'Completar'}
+            </Button>
             
             <Button 
               className="btn-manage-modern product-action-btn w-100"

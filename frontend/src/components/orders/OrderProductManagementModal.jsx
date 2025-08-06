@@ -242,19 +242,11 @@ const OrderProductManagementModal = ({
 
   return (
     <Modal show={show} onHide={handleClose} centered size="lg">
-      <Modal.Header>
+      <Modal.Header closeButton>
         <Modal.Title>
           <FaReceipt className="me-2" />
           Detalles de los Productos de la Venta
         </Modal.Title>
-        <Button 
-          variant="link" 
-          className="btn-close p-0 ms-auto" 
-          onClick={handleClose}
-          style={{ fontSize: '1.5rem', color: '#6c757d' }}
-        >
-          <FaTimes />
-        </Button>
       </Modal.Header>
       
       <Modal.Body>
@@ -442,22 +434,7 @@ const OrderProductManagementModal = ({
         </div>
       </Modal.Body>
 
-      <Modal.Footer>
-        {products.length > 0 && (
-          <Button 
-            variant="primary" 
-            size="sm"
-            disabled={loading}
-            title="Generar factura"
-            onClick={() => {
-              toast.info('Funcionalidad de generación de PDF próximamente disponible');
-            }}
-          >
-            <FaFilePdf className="me-1" />
-            PDF
-          </Button>
-        )}
-      </Modal.Footer>
+      
     </Modal>
   );
 };
